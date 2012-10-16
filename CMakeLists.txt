@@ -41,9 +41,9 @@ IF(WIN32)
 	ENDIF()
 	SET(DYNINST_LIBS ./libs/windows/i386-unknown-nt4.0/lib/)	# dyninst libraries
 ELSE()
-	SET(CMAKE_CXX_FLAGS "-W -Wall -Wextra ${CMAKE_CXX_FLAGS}")
+	SET(CMAKE_CXX_FLAGS "-W -Wall -O2 -Wextra ${CMAKE_CXX_FLAGS}")
 	IF(DEBUG)
-		SET(CMAKE_CXX_FLAGS " -O2 -g3 -pg ${CMAKE_CXX_FLAGS}")
+		SET(CMAKE_CXX_FLAGS " -g3 -pg ${CMAKE_CXX_FLAGS}")
 	ENDIF()
 	SET(DYNINST_LIBS ./libs/linux/i386-unknown-linux2.4/lib/)	# dyninst libraries
 ENDIF()
