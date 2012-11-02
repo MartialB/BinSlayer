@@ -86,10 +86,10 @@ bool BinSlay::CG_Core::run_bindiff_algorithm(int level)
 
 bool BinSlay::CG_Core::compute_ged(int level)
 {
-      // ///////////////////////////////////
-      // timespec start, end;
-      // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-      // ///////////////////////////////////
+      ///////////////////////////////////
+      timespec start, end;
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+      ///////////////////////////////////
 
 
   // Set the initial threshold
@@ -356,22 +356,22 @@ bool BinSlay::CG_Core::compute_ged(int level)
       // std::cout << "(*it_iso)->getLeft(): " << (*it_iso)->getLeft()
       // 		<< " - (*it_iso)->getRight(): " << (*it_iso)->getRight() << std::endl;
     }
-  //  std::cout << std::dec << "Final ged is: " << final_ged << std::endl;
+   std::cout << std::dec << "Final ged is: " << final_ged << std::endl;
   //   _ged->setEditPath(tmp_ep);
-      // //////////////////////////////////
-      // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-      // std::cout << "GED time: ";
-      // if ((end.tv_nsec-start.tv_nsec) < 0)
-      // 	{
-      // 	  std::cout << end.tv_sec - start.tv_sec - 1 << ":";
-      // 	  std::cout << 1000000000 + end.tv_nsec - start.tv_nsec << std::endl;;
-      // 	}
-      // else
-      // 	{
-      // 	  std::cout << end.tv_sec - start.tv_sec << ":";
-      // 	  std::cout << end.tv_nsec - start.tv_nsec << std::endl;
-      // 	}
-      // //////////////////////////////////
+      //////////////////////////////////
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+      std::cout << "GED time: ";
+      if ((end.tv_nsec-start.tv_nsec) < 0)
+      	{
+      	  std::cout << end.tv_sec - start.tv_sec - 1 << ":";
+      	  std::cout << 1000000000 + end.tv_nsec - start.tv_nsec << std::endl;;
+      	}
+      else
+      	{
+      	  std::cout << end.tv_sec - start.tv_sec << ":";
+      	  std::cout << end.tv_nsec - start.tv_nsec << std::endl;
+      	}
+      //////////////////////////////////
 
   return true;
 }

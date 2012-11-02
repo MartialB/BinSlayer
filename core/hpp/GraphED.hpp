@@ -251,7 +251,10 @@ namespace BinSlay
 		    ++nb_deletions;
 		}
 	    }
-      // std::cout << "Nb substitutions: " << nb_substitutions << std::endl;
+      std::cout << std::dec << "swap: " << nb_substitutions
+		<< " - add: " << nb_insertions
+		<< " - del:" << nb_deletions
+		<< std::endl;
       // std::cout << "Nb insertions: " << nb_insertions << std::endl;
       // std::cout << "Nb deletions: " << nb_deletions << std::endl;
       this->_edit_path = ret;

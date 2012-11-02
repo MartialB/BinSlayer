@@ -47,6 +47,7 @@ namespace BinSlay {
 		 int &level_of_depth,
 		 int &nb_basic_blocks
       ) const;
+
       void label_nb_jump_to_exit(
 		 Dyninst::ParseAPI::Function *f,
 		 BinSlay::ReverseAPI::CFG *cfg,
@@ -55,22 +56,6 @@ namespace BinSlay {
 		 int &level
       ) const;
     };
-    
-    // class Visitor : public Dyninst::InstructionAPI::Visitor
-    // {
-    // public:
-    //   Visitor(Address eip);
-    //   ~Visitor();
-    //   virtual void visit(Dyninst::InstructionAPI::BinaryFunction *b);
-    //   virtual void visit(Dyninst::InstructionAPI::Immediate *i);
-    //   virtual void visit(Dyninst::InstructionAPI::RegisterAST *r);
-    //   virtual void visit(Dyninst::InstructionAPI::Dereference *d);
-
-    // // private:
-    //   Address _eip;
-    //   std::list<std::string>	_operands;
-    //   std::list<std::string>	_operators;
-    // };
   }
 }
 

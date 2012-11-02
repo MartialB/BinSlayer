@@ -97,7 +97,7 @@ void BinSlay::Hungarian::solve()
   bool isFinished = false;
   int step = 0;
 
-  // std::cout << "Size of the cost matrix = " << _cost_matrix_size << std::endl;
+  std::cout << "Size of the cost matrix = " << _cost_matrix_size << std::endl;
   while (!isFinished)
     {
       switch (step)

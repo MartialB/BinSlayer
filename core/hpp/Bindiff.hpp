@@ -92,6 +92,7 @@ namespace BinSlay
       typename BinSlay::bind_node<NodeType>::MAPPING *mapping =
 	new typename BinSlay::bind_node<NodeType>::MAPPING;
       // unsigned int old_nb_iso = 0;
+
       // unsigned int new_nb_iso = 0;
       typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST *IsoList = NULL;
       int level = 0;
@@ -115,15 +116,29 @@ namespace BinSlay
       return mapping; 
     }
 
-    void re_run(typename BinSlay::bind_node<NodeType>::MAPPING &current_mapping)
+    unsigned int re_run(typename BinSlay::bind_node<NodeType>::MAPPING &current_mapping)
     {
+      unsigned int ret = 0;
       // Re-run the algorithm with the previous unmatched lists
       typename BinSlay::bind_node<NodeType>::MAPPING *new_mapping = run();
       
       // Update the current mapping with the new one, if any
+      // and get the number of new isomorphism found
       if (new_mapping->size())
-	current_mapping.insert(current_mapping.end(), new_mapping->begin(), new_mapping->end());
-      delete new_mapping;  
+	{
+	  for (typename BinSlay::bind_node<NodeType>::MAPPING::const_iterator it_map =
+		 new_mapping->begin(); it_map != new_mapping->end(); ++it_map)
+	    {
+	      for (typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST::const_iterator it_iso =
+		     (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso)
+		{
+		  ++ret;
+		}
+	    }
+	  current_mapping.insert(current_mapping.end(), new_mapping->begin(), new_mapping->end());
+	}
+      delete new_mapping;
+      return ret;
     }
     
     void remove_node_from_left_list(int node_idx)

@@ -143,10 +143,10 @@ namespace BinSlay
     // Run bindiff algorithm at the current level
     virtual bool run_bindiff_algorithm(int)
     {
-      // ///////////////////////////////////
-      // timespec start, end;
-      // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-      // ///////////////////////////////////
+      ///////////////////////////////////
+      timespec start, end;
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+      ///////////////////////////////////
 
       // Delete the previous '_bindiff' object
       if (_bindiff) { delete _bindiff; _bindiff = NULL; }
@@ -180,20 +180,20 @@ namespace BinSlay
       // Call the run method and retrieve the MAPPING
       _mapping = _bindiff->run();
 
-      // //////////////////////////////////
-      // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-      // std::cout << "Bindiff time: ";
-      // if ((end.tv_nsec-start.tv_nsec) < 0)
-      // 	{
-      // 	  std::cout << end.tv_sec - start.tv_sec - 1 << ":";
-      // 	  std::cout << 1000000000 + end.tv_nsec - start.tv_nsec << std::endl;;
-      // 	}
-      // else
-      // 	{
-      // 	  std::cout << end.tv_sec - start.tv_sec << ":";
-      // 	  std::cout << end.tv_nsec - start.tv_nsec << std::endl;
-      // 	}
-      // //////////////////////////////////
+      //////////////////////////////////
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+      std::cout << "Bindiff time: ";
+      if ((end.tv_nsec-start.tv_nsec) < 0)
+      	{
+      	  std::cout << end.tv_sec - start.tv_sec - 1 << ":";
+      	  std::cout << 1000000000 + end.tv_nsec - start.tv_nsec << std::endl;;
+      	}
+      else
+      	{
+      	  std::cout << end.tv_sec - start.tv_sec << ":";
+      	  std::cout << end.tv_nsec - start.tv_nsec << std::endl;
+      	}
+      //////////////////////////////////
 
       // std::cout << "Unmatched nodes in left: " << _l_left->size() << std::endl;
       // std::cout << "Unmatched nodes in right: " << _l_right->size() << std::endl;
@@ -203,28 +203,31 @@ namespace BinSlay
       return true;
     }
 
-    bool re_run_bindiff()
+    unsigned int re_run_bindiff()
     {
-      if (!_bindiff || !_mapping)
-	return false;
+      unsigned int ret = 0;
 
-      _bindiff->re_run(*_mapping);
+      if (!_bindiff || !_mapping)
+	return 0;
+
+      ret = _bindiff->re_run(*_mapping);
 
       // std::cout << "Unmatched nodes in left: " << _l_left->size() << std::endl;
       // std::cout << "Unmatched nodes in right: " << _l_right->size() << std::endl;
       _bindiff->drawResults("res_left", _mapping, *_graph_left);
       _bindiff->drawResults("res_right", _mapping, *_graph_right);
 
-      return true;
+      //            std::cout << std::dec << "ret: " << ret << std::endl;
+      return ret;
     }
 
     // Compute the GED and display results
     virtual bool compute_ged()
     {
-      // ///////////////////////////////////
-      // timespec start, end;
-      // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-      // ///////////////////////////////////
+      ///////////////////////////////////
+      timespec start, end;
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+      ///////////////////////////////////
 
       // Reset '_ged'
       if (_ged) { delete _ged; _ged = NULL; }
@@ -236,21 +239,21 @@ namespace BinSlay
       _ged = new BinSlay::GraphED<NodeType>(*_graph_left, *_graph_right, *_l_left, *_l_right);
       _ged->compute();
 
-      // //////////////////////////////////
-      // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-      // std::cout << "GED time: ";
-      // if ((end.tv_nsec-start.tv_nsec) < 0)
-      // 	{
-      // 	  std::cout << end.tv_sec - start.tv_sec - 1 << ":";
-      // 	  std::cout << 1000000000 + end.tv_nsec - start.tv_nsec << std::endl;;
-      // 	}
-      // else
-      // 	{
-      // 	  std::cout << end.tv_sec - start.tv_sec << ":";
-      // 	  std::cout << end.tv_nsec - start.tv_nsec << std::endl;
-      // 	}
-      // //////////////////////////////////
-
+      //////////////////////////////////
+      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+      std::cout << "GED time: ";
+      if ((end.tv_nsec-start.tv_nsec) < 0)
+      	{
+      	  std::cout << end.tv_sec - start.tv_sec - 1 << ":";
+      	  std::cout << 1000000000 + end.tv_nsec - start.tv_nsec << std::endl;;
+      	}
+      else
+      	{
+      	  std::cout << end.tv_sec - start.tv_sec << ":";
+      	  std::cout << end.tv_nsec - start.tv_nsec << std::endl;
+      	}
+      //////////////////////////////////
+     
 
       // Remove the NULL item from the lists
       if (_l_left->size())
