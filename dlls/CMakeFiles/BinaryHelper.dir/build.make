@@ -69,14 +69,64 @@ dlls/CMakeFiles/BinaryHelper.dir/DyninstBin.cpp.o.provides: dlls/CMakeFiles/Bina
 
 dlls/CMakeFiles/BinaryHelper.dir/DyninstBin.cpp.o.provides.build: dlls/CMakeFiles/BinaryHelper.dir/DyninstBin.cpp.o
 
+dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o: dlls/CMakeFiles/BinaryHelper.dir/flags.make
+dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o: dlls/CFG_Builder.cpp
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/egwene/Travail/Dissertation/BinSlayer/CMakeFiles $(CMAKE_PROGRESS_2)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o"
+	cd /home/egwene/Travail/Dissertation/BinSlayer/dlls && /usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o -c /home/egwene/Travail/Dissertation/BinSlayer/dlls/CFG_Builder.cpp
+
+dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.i"
+	cd /home/egwene/Travail/Dissertation/BinSlayer/dlls && /usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/egwene/Travail/Dissertation/BinSlayer/dlls/CFG_Builder.cpp > CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.i
+
+dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.s"
+	cd /home/egwene/Travail/Dissertation/BinSlayer/dlls && /usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/egwene/Travail/Dissertation/BinSlayer/dlls/CFG_Builder.cpp -o CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.s
+
+dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o.requires:
+.PHONY : dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o.requires
+
+dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o.provides: dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o.requires
+	$(MAKE) -f dlls/CMakeFiles/BinaryHelper.dir/build.make dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o.provides.build
+.PHONY : dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o.provides
+
+dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o.provides.build: dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o
+
+dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o: dlls/CMakeFiles/BinaryHelper.dir/flags.make
+dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o: dlls/BB_Labelling.cpp
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/egwene/Travail/Dissertation/BinSlayer/CMakeFiles $(CMAKE_PROGRESS_3)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o"
+	cd /home/egwene/Travail/Dissertation/BinSlayer/dlls && /usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o -c /home/egwene/Travail/Dissertation/BinSlayer/dlls/BB_Labelling.cpp
+
+dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.i"
+	cd /home/egwene/Travail/Dissertation/BinSlayer/dlls && /usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/egwene/Travail/Dissertation/BinSlayer/dlls/BB_Labelling.cpp > CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.i
+
+dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.s"
+	cd /home/egwene/Travail/Dissertation/BinSlayer/dlls && /usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/egwene/Travail/Dissertation/BinSlayer/dlls/BB_Labelling.cpp -o CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.s
+
+dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o.requires:
+.PHONY : dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o.requires
+
+dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o.provides: dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o.requires
+	$(MAKE) -f dlls/CMakeFiles/BinaryHelper.dir/build.make dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o.provides.build
+.PHONY : dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o.provides
+
+dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o.provides.build: dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o
+
 # Object files for target BinaryHelper
 BinaryHelper_OBJECTS = \
-"CMakeFiles/BinaryHelper.dir/DyninstBin.cpp.o"
+"CMakeFiles/BinaryHelper.dir/DyninstBin.cpp.o" \
+"CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o" \
+"CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o"
 
 # External object files for target BinaryHelper
 BinaryHelper_EXTERNAL_OBJECTS =
 
 libBinaryHelper.so: dlls/CMakeFiles/BinaryHelper.dir/DyninstBin.cpp.o
+libBinaryHelper.so: dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o
+libBinaryHelper.so: dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o
 libBinaryHelper.so: dlls/CMakeFiles/BinaryHelper.dir/build.make
 libBinaryHelper.so: dlls/CMakeFiles/BinaryHelper.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking CXX shared library ../libBinaryHelper.so"
@@ -87,6 +137,8 @@ dlls/CMakeFiles/BinaryHelper.dir/build: libBinaryHelper.so
 .PHONY : dlls/CMakeFiles/BinaryHelper.dir/build
 
 dlls/CMakeFiles/BinaryHelper.dir/requires: dlls/CMakeFiles/BinaryHelper.dir/DyninstBin.cpp.o.requires
+dlls/CMakeFiles/BinaryHelper.dir/requires: dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o.requires
+dlls/CMakeFiles/BinaryHelper.dir/requires: dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o.requires
 .PHONY : dlls/CMakeFiles/BinaryHelper.dir/requires
 
 dlls/CMakeFiles/BinaryHelper.dir/clean:

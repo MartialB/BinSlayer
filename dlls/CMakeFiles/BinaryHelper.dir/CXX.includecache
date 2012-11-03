@@ -2576,6 +2576,18 @@ cstddef
 boost/type_traits/detail/bool_trait_undef.hpp
 -
 
+/home/egwene/Travail/Dissertation/BinSlayer/dlls/BB_Labelling.hh
+DyninstBin.hh
+/home/egwene/Travail/Dissertation/BinSlayer/dlls/DyninstBin.hh
+
+/home/egwene/Travail/Dissertation/BinSlayer/dlls/CFG_BreadthFirstSearch.hpp
+DyninstBin.hh
+/home/egwene/Travail/Dissertation/BinSlayer/dlls/DyninstBin.hh
+
+/home/egwene/Travail/Dissertation/BinSlayer/dlls/CFG_Builder.hh
+DyninstBin.hh
+/home/egwene/Travail/Dissertation/BinSlayer/dlls/DyninstBin.hh
+
 /home/egwene/Travail/Dissertation/BinSlayer/dlls/DyninstBin.cpp
 fstream
 -
@@ -2597,6 +2609,12 @@ InstructionDecoder.h
 /home/egwene/Travail/Dissertation/BinSlayer/dlls/InstructionDecoder.h
 beaengine/BeaEngine.h
 /home/egwene/Travail/Dissertation/BinSlayer/dlls/beaengine/BeaEngine.h
+CFG_BreadthFirstSearch.hpp
+/home/egwene/Travail/Dissertation/BinSlayer/dlls/CFG_BreadthFirstSearch.hpp
+CFG_Builder.hh
+/home/egwene/Travail/Dissertation/BinSlayer/dlls/CFG_Builder.hh
+BB_Labelling.hh
+/home/egwene/Travail/Dissertation/BinSlayer/dlls/BB_Labelling.hh
 
 /home/egwene/Travail/Dissertation/BinSlayer/dlls/DyninstBin.hh
 list

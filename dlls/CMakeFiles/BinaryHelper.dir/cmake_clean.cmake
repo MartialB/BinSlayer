@@ -1,5 +1,7 @@
 FILE(REMOVE_RECURSE
   "CMakeFiles/BinaryHelper.dir/DyninstBin.cpp.o"
+  "CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o"
+  "CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o"
   "../libBinaryHelper.pdb"
   "../libBinaryHelper.so"
 )

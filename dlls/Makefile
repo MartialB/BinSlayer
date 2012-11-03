@@ -109,6 +109,54 @@ BinaryHelper/fast:
 	cd /home/egwene/Travail/Dissertation/BinSlayer && $(MAKE) -f dlls/CMakeFiles/BinaryHelper.dir/build.make dlls/CMakeFiles/BinaryHelper.dir/build
 .PHONY : BinaryHelper/fast
 
+BB_Labelling.o: BB_Labelling.cpp.o
+.PHONY : BB_Labelling.o
+
+# target to build an object file
+BB_Labelling.cpp.o:
+	cd /home/egwene/Travail/Dissertation/BinSlayer && $(MAKE) -f dlls/CMakeFiles/BinaryHelper.dir/build.make dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.o
+.PHONY : BB_Labelling.cpp.o
+
+BB_Labelling.i: BB_Labelling.cpp.i
+.PHONY : BB_Labelling.i
+
+# target to preprocess a source file
+BB_Labelling.cpp.i:
+	cd /home/egwene/Travail/Dissertation/BinSlayer && $(MAKE) -f dlls/CMakeFiles/BinaryHelper.dir/build.make dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.i
+.PHONY : BB_Labelling.cpp.i
+
+BB_Labelling.s: BB_Labelling.cpp.s
+.PHONY : BB_Labelling.s
+
+# target to generate assembly for a file
+BB_Labelling.cpp.s:
+	cd /home/egwene/Travail/Dissertation/BinSlayer && $(MAKE) -f dlls/CMakeFiles/BinaryHelper.dir/build.make dlls/CMakeFiles/BinaryHelper.dir/BB_Labelling.cpp.s
+.PHONY : BB_Labelling.cpp.s
+
+CFG_Builder.o: CFG_Builder.cpp.o
+.PHONY : CFG_Builder.o
+
+# target to build an object file
+CFG_Builder.cpp.o:
+	cd /home/egwene/Travail/Dissertation/BinSlayer && $(MAKE) -f dlls/CMakeFiles/BinaryHelper.dir/build.make dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.o
+.PHONY : CFG_Builder.cpp.o
+
+CFG_Builder.i: CFG_Builder.cpp.i
+.PHONY : CFG_Builder.i
+
+# target to preprocess a source file
+CFG_Builder.cpp.i:
+	cd /home/egwene/Travail/Dissertation/BinSlayer && $(MAKE) -f dlls/CMakeFiles/BinaryHelper.dir/build.make dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.i
+.PHONY : CFG_Builder.cpp.i
+
+CFG_Builder.s: CFG_Builder.cpp.s
+.PHONY : CFG_Builder.s
+
+# target to generate assembly for a file
+CFG_Builder.cpp.s:
+	cd /home/egwene/Travail/Dissertation/BinSlayer && $(MAKE) -f dlls/CMakeFiles/BinaryHelper.dir/build.make dlls/CMakeFiles/BinaryHelper.dir/CFG_Builder.cpp.s
+.PHONY : CFG_Builder.cpp.s
+
 DyninstBin.o: DyninstBin.cpp.o
 .PHONY : DyninstBin.o
 
@@ -142,6 +190,12 @@ help:
 	@echo "... BinaryHelper"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... BB_Labelling.o"
+	@echo "... BB_Labelling.i"
+	@echo "... BB_Labelling.s"
+	@echo "... CFG_Builder.o"
+	@echo "... CFG_Builder.i"
+	@echo "... CFG_Builder.s"
 	@echo "... DyninstBin.o"
 	@echo "... DyninstBin.i"
 	@echo "... DyninstBin.s"

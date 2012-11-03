@@ -8,15 +8,18 @@
 #include "DyninstBin.hh"
 #include "InstructionDecoder.h"
 #include "beaengine/BeaEngine.h"
+#include "CFG_BreadthFirstSearch.hpp"
+#include "CFG_Builder.hh"
+#include "BB_Labelling.hh"
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 BinSlay::ReverseAPI::FctVertex::FctVertex(
-	int id,
-	int nb_basic_blocks,
-	int nb_internal_edges,
-        int nb_outgoing_calls,
-	int nb_incomming_calls,
+	unsigned int id,
+	unsigned int nb_basic_blocks,
+	unsigned int nb_internal_edges,
+        unsigned int nb_outgoing_calls,
+	unsigned int nb_incomming_calls,
 	Address addr
 )
   : _id(id),
@@ -35,13 +38,13 @@ BinSlay::ReverseAPI::FctVertex::~FctVertex()
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 BinSlay::ReverseAPI::BasicBlockBVertex::BasicBlockBVertex(
-	int id,
-	int alpha,
-	int beta,
-	int gamma,
-	int nb_edges_in,
-	int nb_edges_out,
-	int nb_instrs,
+	unsigned int id,
+	unsigned int alpha,
+	unsigned int beta,
+	unsigned int gamma,
+	unsigned int nb_edges_in,
+	unsigned int nb_edges_out,
+	unsigned int nb_instrs,
 	unsigned int crc32,
 	Address addr
 )
@@ -122,6 +125,81 @@ BinSlay::ReverseAPI::DyninstBin::getFileName() const
   return this->_file_name;
 }
 
+/*
+** Get nb internal edges in the CFG of the function
+*/
+unsigned int
+BinSlay::ReverseAPI::DyninstBin::get_fct_nb_internals_edges(
+	Dyninst::ParseAPI::Function &f
+) const
+{
+  unsigned int nb_internal_edges = 0;
+
+  for(Dyninst::ParseAPI::Function::blocklist::iterator it_block =
+	f.blocks().begin(); it_block != f.blocks().end(); ++it_block) {
+    for (Dyninst::ParseAPI::Block::edgelist::iterator it_edge =
+	   (*it_block)->targets().begin(); it_edge != (*it_block)->targets().end();
+	 ++it_edge) {
+      if ((*it_edge)->type() != Dyninst::ParseAPI::CALL &&
+	  (*it_edge)->type() != Dyninst::ParseAPI::RET)
+	++nb_internal_edges;
+    }
+  }
+  return nb_internal_edges;
+}
+
+/*
+** Get all incomming edges to this function (all CALLs to this function)
+** We need this for the computation of the GED.
+*/
+unsigned int
+BinSlay::ReverseAPI::DyninstBin::get_fct_nb_incomming_calls(
+	Dyninst::ParseAPI::Function &f
+) const
+{
+  unsigned int nb_incomming_calls = 0;
+  std::map<Dyninst::Address, bool> visited;
+  
+  for(Dyninst::ParseAPI::Block::edgelist::iterator it_edge = f.entry()->sources().begin();
+      it_edge != f.entry()->sources().end(); ++it_edge) {
+    // Do not revisit same edges in shared code
+    if (visited.find((*it_edge)->src()->start()) != visited.end())
+      continue;
+    visited[(*it_edge)->src()->start()] = true;
+
+    if ((*it_edge)->type() == Dyninst::ParseAPI::CALL)
+      ++nb_incomming_calls;
+  }
+  return nb_incomming_calls;
+}
+
+/*
+** Get all outcomming edges from this function (all CALLs in this function)
+*/
+unsigned int
+BinSlay::ReverseAPI::DyninstBin::get_fct_nb_outcomming_calls(
+	Dyninst::ParseAPI::Function &f
+) const
+{
+  unsigned int nb_outcomming_calls = 0;
+  std::map<Dyninst::Address, bool> visited;
+  
+  for(Dyninst::ParseAPI::Function::edgelist::iterator it_edge = f.callEdges().begin();
+      it_edge != f.callEdges().end(); ++it_edge) {
+    // Do not revisit same edges in shared code
+    if (visited.find((*it_edge)->src()->start()) != visited.end())
+      continue;
+    visited[(*it_edge)->src()->start()] = true;
+
+    if ((*it_edge)->type() == Dyninst::ParseAPI::CALL)
+      ++nb_outcomming_calls;
+  }
+  return nb_outcomming_calls;
+}
+
+/*
+**
+*/
 BinSlay::ReverseAPI::CG *
 BinSlay::ReverseAPI::DyninstBin::recover_call_graph() const
 {
@@ -137,304 +215,112 @@ BinSlay::ReverseAPI::DyninstBin::recover_call_graph() const
 		  std::fstream::in | std::fstream::out | std::fstream::trunc);
   fs << "digraph " << this->_file_name << " {" << std::endl;
 
-  // Get all the functions from the code
-  Dyninst::ParseAPI::CodeObject::funclist &all = this->_co->funcs();
-
   // Resize the Call-Graph data structure to the number of functions found
-  cg->resize(all.size());
+  cg->resize(this->_co->funcs().size());
 
-  Dyninst::ParseAPI::CodeObject::funclist::iterator fit = all.begin();
   // For each function found...
-  unsigned int nb_nodes = 0;
-  for (; fit != all.end(); ++fit) {
-    Dyninst::ParseAPI::Function *f = *fit;
-    Dyninst::ParseAPI::Function::blocklist::iterator bit = f->blocks().begin();
+  size_t nb_nodes = 0;
+  for (auto it_fct = this->_co->funcs().begin(); it_fct != this->_co->funcs().end(); ++it_fct) {
+    Dyninst::ParseAPI::Function *f = *it_fct;
 
-      // // //std::cout << "Fname: " << f->name() << std::endl;
-      // if (f->name().find("targ", 0, 4) != std::string::npos)
-      // 	{
-      // 	  std::cout << f->name() << std::endl;
-      // 	  //      	  continue;
-      // 	}
-
-      // Get nb internal edges in the CFG of the function
-      unsigned int nb_internal_edges = 0;
-      for(Dyninst::ParseAPI::Function::blocklist::iterator it_block =
-	    f->blocks().begin(); it_block != f->blocks().end(); ++it_block) {
-	for (Dyninst::ParseAPI::Block::edgelist::iterator it_edge =
-	       (*it_block)->targets().begin(); it_edge != (*it_block)->targets().end();
-	     ++it_edge) {
-	  if ((*it_edge)->type() != Dyninst::ParseAPI::CALL &&
-	      (*it_edge)->type() != Dyninst::ParseAPI::RET)
-	      	++nb_internal_edges;
-	    }
-	}
-
-      // Get all incomming edges to this function (all CALLs to this function)
-      // We need this for the computation of the GED.
-      unsigned int nb_incomming_calls = 0;
-      {
-	std::map<Dyninst::Address, bool> visited;
-
-	for(Dyninst::ParseAPI::Block::edgelist::iterator it_edge = f->entry()->sources().begin();
-	    it_edge != f->entry()->sources().end(); ++it_edge) {
-	  // Do not revisit same edges in shared code
-	  if (visited.find((*it_edge)->src()->start()) != visited.end())
-	    continue;
-	  visited[(*it_edge)->src()->start()] = true;
-
-	  if ((*it_edge)->type() == Dyninst::ParseAPI::CALL)
-	    ++nb_incomming_calls;
-	}
-      }
-
-      // Get all outcomming edges from this function (all CALLs in this function)
-      unsigned int nb_outcomming_calls = 0;
-      {
-	std::map<Dyninst::Address, bool> visited;
-
-	for(Dyninst::ParseAPI::Function::edgelist::iterator it_edge = f->callEdges().begin();
-	    it_edge != f->callEdges().end(); ++it_edge) {
-	  // Do not revisit same edges in shared code
-	  if (visited.find((*it_edge)->src()->start()) != visited.end())
-	    continue;
-	  visited[(*it_edge)->src()->start()] = true;
-  
-	  if ((*it_edge)->type() == Dyninst::ParseAPI::CALL)
-	    ++nb_outcomming_calls;
-	}
-      }
-
-      //
-      // TODO: Handle the problem of static and dynamic library call
-      //
-
-      (*cg)[nb_nodes]= new BinSlay::ReverseAPI::FctVertex(
+    // Create a function node in the CG data structure
+    (*cg)[nb_nodes]= new BinSlay::ReverseAPI::FctVertex(
 		       	nb_nodes,
 			f->blocks().size(),
-			nb_internal_edges,
-			nb_outcomming_calls,
-			nb_incomming_calls,
+			get_fct_nb_internals_edges(*f),
+			get_fct_nb_outcomming_calls(*f),
+			get_fct_nb_incomming_calls(*f),
 			f->entry()->start()
-       		       );
+       		     );
 
-      // Increase the number of node (one node => one function)
-      ++nb_nodes;
+    for(auto it_block = f->blocks().begin(); it_block != f->blocks().end(); ++it_block) {
+      Dyninst::ParseAPI::Block *b = *it_block;
+      // Don’t revisit blocks in shared code
+      if (seen.find(b->start()) != seen.end())
+	continue;	  
+      seen[b->start()] = true;
 
-      // For each basic block in the current function do...
-      for(; bit != f->blocks().end(); ++bit) {
-	Dyninst::ParseAPI::Block *b = *bit;
-	// Don’t revisit blocks in shared code
-	if (seen.find(b->start()) != seen.end())
-	  continue;	  
-	seen[b->start()] = true;
-	Dyninst::ParseAPI::Block::edgelist::iterator it = b->targets().begin();
-	// For each edges which points out of the current block,
-	// check for function calls
-	for (; it != b->targets().end(); ++it) {
-	  // To recover the CALL GRAPH, we are only interested in edges
-	  // which type is Dyninst::ParseAPI::CALL
-	  if ((*it)->type() == Dyninst::ParseAPI::CALL) {
-	    // Debug
-	    fs << "\t\t\"" << std::hex << f->entry()->start() << "\" -> \""
-	       << (*it)->trg()->start() << "\"" << " [color=blue]" << std::endl;
-	    // Add link in our call graph data
-	    (*cg)[nb_nodes - 1]->_link_to.push_front((*it)->trg()->start());
-	  }
+      // For each edges which points out of the current block,
+      // check for function calls
+      for (auto it_edge = b->targets().begin(); it_edge != b->targets().end(); ++it_edge) {
+	// To recover the call graph, we are only interested in edges
+	// which type is Dyninst::ParseAPI::CALL
+	if ((*it_edge)->type() == Dyninst::ParseAPI::CALL) {
+	  // Fill the .dot file
+	  fs << "\t\t\"" << std::hex << f->entry()->start() << "\" -> \""
+	     << (*it_edge)->trg()->start() << "\"" << " [color=blue]" << std::endl;
+	  // Add link in our call graph data
+	  (*cg)[nb_nodes]->_link_to.push_front((*it_edge)->trg()->start());
 	}
       }
     }
+    // Increase the number of nodes (one node => one function)
+    ++nb_nodes;
+  }
   fs << "}" << std::endl;
   fs.close();
   return cg;
 }
 
-void BinSlay::ReverseAPI::DyninstBin::build_cfg(
-		    Dyninst::ParseAPI::Function *f,
-		    BinSlay::ReverseAPI::CFG *cfg,
-		    std::list<Dyninst::ParseAPI::Block *> *blocks_list,
-		    std::map<Dyninst::Address, bool> &seen,
-		    int &level_of_depth,
-		    int &nb_basic_blocks
-	       ) const
-{
-  std::list<Dyninst::ParseAPI::Block *> *children_list  =
-    new std::list<Dyninst::ParseAPI::Block *>;
-
-  for (std::list<Dyninst::ParseAPI::Block *>::iterator it = blocks_list->begin();
-       it != blocks_list->end(); ++it)
-    {
-      // Don’t revisit blocks in shared code (otherwise infinite loop)
-      if (seen.find((*it)->start()) != seen.end())
-	continue;
-      seen[(*it)->start()] = true;
-
-      int _nb_jump_from_entry = level_of_depth;
-      int _nb_jump_to_exit = 0;
-      int _nb_outgoing_calls = 0;	
-      // Search for children and for outgoing call
-      for(Dyninst::ParseAPI::Block::edgelist::iterator it_edge = (*it)->targets().begin();
-      	  it_edge != (*it)->targets().end(); ++it_edge)
-      	{
-	  // Children blocks
-      	  if ((*it_edge)->type() != Dyninst::ParseAPI::CALL &&
-      	      (*it_edge)->type() != Dyninst::ParseAPI::RET)
-      	    {
-      	      if (f->contains((*it_edge)->trg()))
-		{
-		  // if (seen.find((*it_edge)->trg()->start()) == seen.end())
-		  children_list->push_front((*it_edge)->trg());
-		}
-      	    }
-	  // outgoing call
-      	  if ((*it_edge)->type() == Dyninst::ParseAPI::CALL)
-      	    ++_nb_outgoing_calls;
-      	}
-      
-      // Add function node to our call graph data
-      // std::cout << "New basic block: " << "idx = " << nb_basic_blocks
-      // 		<< " - addr = " << std::hex << (*it)->start() << std::endl;
-      (*cfg)[nb_basic_blocks] = new BinSlay::ReverseAPI::BasicBlockBVertex(
-					nb_basic_blocks,
-					_nb_jump_from_entry,
-					_nb_jump_to_exit,
-					_nb_outgoing_calls,
-					(*it)->sources().size(),
-					(*it)->targets().size(),
-					get_basic_block_nbInstrs((*it)->start()),
-					get_basic_block_crc32((*it)->start()),
-					(*it)->start()
-				 );
-      // Link basic current block to other
-      Dyninst::ParseAPI::Block::edgelist::iterator it_edge = (*it)->targets().begin();
-      for (; it_edge != (*it)->targets().end(); ++it_edge)
-	{
-	  // To recover the CFG, we are not interested in edges
-	  // which type is Dyninst::ParseAPI::CALL and Dyninst::ParseAPI::RET
-	  if ((*it_edge)->type() != Dyninst::ParseAPI::CALL &&
-	      (*it_edge)->type() != Dyninst::ParseAPI::RET)
-	    {
-	      (*cfg)[nb_basic_blocks]->_link_to.push_front((*it_edge)->trg()->start());
-	    }
-	}
-      ++nb_basic_blocks;
-    }
-  
-  delete blocks_list;
-
-  // If the children list is empty, we have reached the end of the function
-  if (!children_list->size())
-    return;
-
-  // Recursion to the children nodes UP->DOWN.
-  build_cfg(f, cfg, children_list, seen, ++level_of_depth, nb_basic_blocks);
-}
-
-BinSlay::ReverseAPI::CFG *BinSlay::ReverseAPI::DyninstBin::recover_function_cfg(
+/*
+** Retrieve a ptr on the desired 'Function' object
+*/
+Dyninst::ParseAPI::Function *
+BinSlay::ReverseAPI::DyninstBin::get_fct_by_addr(
 	  Dyninst::Address addr) const
 {
-  Dyninst::ParseAPI::Function *f = NULL;
-  BinSlay::ReverseAPI::CFG *cfg = new BinSlay::ReverseAPI::CFG;
-  Dyninst::ParseAPI::CodeObject::funclist &all = this->_co->funcs();
-  Dyninst::ParseAPI::CodeObject::funclist::iterator fit = all.begin();
+  Dyninst::ParseAPI::Function *f = nullptr;
 
-  // Retrieve a ptr on the desired 'Function' object
-  for (; fit != all.end(); ++fit)
-    {
-      if ((*fit)->entry()->start() == addr)
-	{
-	  f = *fit;
-	  break;
-	}
+  for (auto it_fct = this->_co->funcs().begin(); it_fct != this->_co->funcs().end(); ++it_fct) {
+    if ((*it_fct)->entry()->start() == addr) {
+      f = *it_fct;
+      break;
     }
-  
-  // Construct the CFG of the function
-  std::map<Dyninst::Address, bool> seen;
-  int level_of_depth = 0;
-  int nb_basic_blocks = 0;
-  std::list<Dyninst::ParseAPI::Block *> *blocks_list =
-    new std::list<Dyninst::ParseAPI::Block *>;
-  std::map<Dyninst::Address, bool> s;
-
-  cfg->resize(f->blocks().size());
-  blocks_list->push_front(f->entry());
-  build_cfg(f, cfg, blocks_list, seen, level_of_depth, nb_basic_blocks);
-
-  // Add the '_nb_jump_to_exit' label to all the basic blocks in the newly recovered CFG
-  // First, find all the returning blocks
-  std::vector<Dyninst::ParseAPI::Block *> *blist =
-    new std::vector<Dyninst::ParseAPI::Block *>;
-  {
-    for(Dyninst::ParseAPI::Function::blocklist::iterator it_block = f->blocks().begin();
-  	it_block != f->blocks().end(); ++it_block)
-      {
-  	// Check for a returning block
-  	for(Dyninst::ParseAPI::Block::edgelist::iterator it_edge =
-  	      (*it_block)->targets().begin(); it_edge != (*it_block)->targets().end();
-  	    ++it_edge)
-  	  {
-  	    if ((*it_edge)->type() == Dyninst::ParseAPI::RET)
-  	      {
-  		// Don’t revisit blocks in shared code (otherwise infinite loop)
-  		if (s.find((*it_edge)->src()->start()) != s.end())
-  		  continue;
-  		s[(*it_block)->start()] = true;	      
-  		blist->push_back(*it_block);
-  	      }
-  	  }
-      }
   }
+  return f;
+}
 
-  level_of_depth = 0;
-  //  Then, start from the returning block and go up until
-  // we reach the starting block
-  label_nb_jump_to_exit(f, cfg, s, blist, level_of_depth);
+/*
+**
+*/
+BinSlay::ReverseAPI::CFG *
+BinSlay::ReverseAPI::DyninstBin::recover_function_cfg(
+	  Dyninst::Address addr) const
+{
+  BinSlay::ReverseAPI::CFG *cfg = new BinSlay::ReverseAPI::CFG;
+  Dyninst::ParseAPI::Function &f = *this->get_fct_by_addr(addr);
+  // Set the size of the CFG data structure to the number of basic blocks
+  cfg->resize(f.blocks().size());
+  // Initialize the list of basic blocks with the function entry block
+  std::list<Dyninst::ParseAPI::Block *> blocks_list;
+  blocks_list.push_front(f.entry());
+  // Instanciate and launch cfg builder functor with top-down graph traversal
+  BinSlay::ReverseAPI::CFG_BreadthFirstSearch<
+    BinSlay::ReverseAPI::CFG_Builder
+  > top_down(*this, f, *cfg);
+  // Build the cfg
+  top_down(blocks_list, BinSlay::ReverseAPI::CFG_BreadthFirstSearch<
+	     BinSlay::ReverseAPI::CFG_Builder
+	     >::TOP_DOWN);
+  // We now need to set the '_nb_jump_to_exit' label to all basic blocks in the newly
+  // recovered CFG : we retrieve all returning blocks and we launch a down-top BreadthFirstSearch
+  std::list<Dyninst::ParseAPI::Block *> blist;
+  for(auto it_block = f.returnBlocks().begin(); it_block != f.returnBlocks().end(); ++it_block) {
+    blist.push_back(*it_block);
+  }
+  // Instanciate and launch bb labelling functor with down-top graph traversal
+  BinSlay::ReverseAPI::CFG_BreadthFirstSearch<
+    BinSlay::ReverseAPI::BB_Labelling
+  > down_top(*this, f, *cfg);
+  // Label basic blocks
+  down_top(blist, BinSlay::ReverseAPI::CFG_BreadthFirstSearch<
+	     BinSlay::ReverseAPI::BB_Labelling
+	     >::DOWN_TOP);
+  // We now have a complete CFG data structure with all included information and labels
   return cfg;
 }
 
-void BinSlay::ReverseAPI::DyninstBin::label_nb_jump_to_exit(
-		      Dyninst::ParseAPI::Function *f,
-		      BinSlay::ReverseAPI::CFG *cfg,
-		      std::map<Dyninst::Address, bool> &s,
-		      std::vector<Dyninst::ParseAPI::Block *> *blist,
-		      int &level) const
-{
-  std::vector<Dyninst::ParseAPI::Block *> *parent_list =
-    new std::vector<Dyninst::ParseAPI::Block *>;
-
-  for (std::vector<Dyninst::ParseAPI::Block *>::iterator it_block = blist->begin();
-       it_block != blist->end(); ++it_block)
-    {
-      // Get parent blocks
-      if ((*it_block)->start() != f->entry()->start())
-	for(Dyninst::ParseAPI::Block::edgelist::iterator it_edge =
-	      (*it_block)->sources().begin(); it_edge != (*it_block)->sources().end();
-	    ++it_edge)
-	  {
-	    if ((*it_edge)->type() != Dyninst::ParseAPI::RET &&
-		(*it_edge)->type() != Dyninst::ParseAPI::CALL)
-	      {
-		// Don’t revisit blocks in shared code
-		if (s.find((*it_edge)->src()->start()) != s.end())
-		  continue;
-		s[(*it_edge)->src()->start()] = true;
-		parent_list->push_back((*it_edge)->src());
-	      }
-	  }
-
-      // Set the '_nb_jump_to_exit'
-      for (unsigned int i = 0; i < cfg->size(); ++i)
-	{
-	  if ((*cfg)[i]->_addr == (*it_block)->start())
-	    (*cfg)[i]->_nb_jump_to_exit = level;
-	}
-    }
-  ++level;
-  delete blist;
-
-  if (parent_list->size())
-    label_nb_jump_to_exit(f, cfg, s, parent_list, level);
-}
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static unsigned int crc32table[256] =	{
 
@@ -507,9 +393,10 @@ static unsigned int crc32table[256] =	{
 	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d,
 };
 
-unsigned int BinSlay::ReverseAPI::DyninstBin::get_function_size(Address addr) const
+unsigned int
+BinSlay::ReverseAPI::DyninstBin::get_function_size(Address addr) const
 {
-  Dyninst::ParseAPI::Function *f = NULL;
+  Dyninst::ParseAPI::Function *f = nullptr;
   Dyninst::ParseAPI::CodeObject::funclist &all = this->_co->funcs();
   Dyninst::ParseAPI::CodeObject::funclist::iterator fit = all.begin();
 
@@ -537,9 +424,10 @@ unsigned int BinSlay::ReverseAPI::DyninstBin::get_function_size(Address addr) co
   return fend - fstart;
 }
 
-BinSlay::ReverseAPI::Crc32 BinSlay::ReverseAPI::DyninstBin::get_function_crc32(Address addr) const
+BinSlay::ReverseAPI::Crc32
+BinSlay::ReverseAPI::DyninstBin::get_function_crc32(Address addr) const
 {
-  Dyninst::ParseAPI::Function *f = NULL;
+  Dyninst::ParseAPI::Function *f = nullptr;
   Dyninst::ParseAPI::CodeObject::funclist &all = this->_co->funcs();
   Dyninst::ParseAPI::CodeObject::funclist::iterator fit = all.begin();
 
@@ -587,7 +475,8 @@ BinSlay::ReverseAPI::Crc32 BinSlay::ReverseAPI::DyninstBin::get_function_crc32(A
   return 0;
 }
 
-unsigned int BinSlay::ReverseAPI::DyninstBin::get_basic_block_nbInstrs(Address addr) const
+unsigned int
+BinSlay::ReverseAPI::DyninstBin::get_basic_block_nbInstrs(Address addr) const
 {
   // Get a ptr to an instance of 'Dyninst::ParseAPI::Block' corresponding to this current
   // basic block
@@ -613,7 +502,8 @@ unsigned int BinSlay::ReverseAPI::DyninstBin::get_basic_block_nbInstrs(Address a
   return nbInstrs;
 }
 
-BinSlay::ReverseAPI::Crc32 BinSlay::ReverseAPI::DyninstBin::get_basic_block_crc32(Address addr) const
+BinSlay::ReverseAPI::Crc32
+BinSlay::ReverseAPI::DyninstBin::get_basic_block_crc32(Address addr) const
 {
   // Get a ptr to an instance of 'Dyninst::ParseAPI::Block' corresponding to this current
   // basic block
@@ -640,7 +530,8 @@ BinSlay::ReverseAPI::Crc32 BinSlay::ReverseAPI::DyninstBin::get_basic_block_crc3
   return crc;  
 }
 
-BinSlay::ReverseAPI::SymName BinSlay::ReverseAPI::DyninstBin::get_function_symname(Address addr) const
+BinSlay::ReverseAPI::SymName
+BinSlay::ReverseAPI::DyninstBin::get_function_symname(Address addr) const
 {
   // Retrieve a ptr on the desired 'Function' object
   for (Dyninst::ParseAPI::CodeObject::funclist::iterator fit = this->_co->funcs().begin();
@@ -729,7 +620,7 @@ BinSlay::ReverseAPI::DyninstBin::recover_function_instr(
   // Data to be returned by this function
   BinSlay::ReverseAPI::INSTR_LIST *instrs = new BinSlay::ReverseAPI::INSTR_LIST;
 
-  Dyninst::ParseAPI::Function *f = NULL;
+  Dyninst::ParseAPI::Function *f = nullptr;
   Dyninst::ParseAPI::CodeObject::funclist &all = this->_co->funcs();
   Dyninst::ParseAPI::CodeObject::funclist::iterator fit = all.begin();
 

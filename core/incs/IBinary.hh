@@ -34,39 +34,39 @@ namespace BinSlay {
 
     struct FctVertex
     {
-      FctVertex(int id, int nb_basic_blocks, int nb_internal_edges,
-		int nb_outgoing_calls, int nb_incomming_calls, Address addr);
+      FctVertex(unsigned int id, unsigned int nb_basic_blocks, unsigned int nb_internal_edges,
+		unsigned int nb_outgoing_calls, unsigned int nb_incomming_calls, Address addr);
       ~FctVertex();
-      int _id;
-      int _nb_basic_blocks;
-      int _nb_internal_edges;
-      int _nb_outgoing_calls;
-      int _nb_incomming_calls;
+      unsigned int _id;
+      unsigned int _nb_basic_blocks;
+      unsigned int _nb_internal_edges;
+      unsigned int _nb_outgoing_calls;
+      unsigned int _nb_incomming_calls;
       Address _addr;
       std::list<Address>  _link_to;
     };
 
     struct BasicBlockBVertex
     {
-      BasicBlockBVertex(int id, int alpha, int beta, int gamma,
-			int nb_edges_in, int nb_edges_out,
-			int nb_instrs, unsigned int crc32, Address addr);
+      BasicBlockBVertex(unsigned int id, unsigned int alpha, unsigned int beta, unsigned int gamma,
+			unsigned int nb_edges_in, unsigned int nb_edges_out,
+			unsigned int nb_instrs, unsigned int crc32, Address addr);
       ~BasicBlockBVertex();
-      int _id;
-      int _nb_jump_from_entry;
-      int _nb_jump_to_exit;
-      int _nb_outgoing_calls;
-      int _nb_edges_in;
-      int _nb_edges_out;
-      int _nb_instrs;
+      unsigned int _id;
+      unsigned int _nb_jump_from_entry;
+      unsigned int _nb_jump_to_exit;
+      unsigned int _nb_outgoing_calls;
+      unsigned int _nb_edges_in;
+      unsigned int _nb_edges_out;
+      unsigned int _nb_instrs;
       unsigned int _crc32;
       Address _addr;
       std::list<Address>  _link_to;
     };
 
     // TODO: Too long with files which contain more than 2000 functions (~25s for 10.000)
-    typedef std::valarray<FctVertex *> CG;
-    typedef std::valarray<BasicBlockBVertex *> CFG;
+    typedef std::vector<FctVertex *> CG;
+    typedef std::vector<BasicBlockBVertex *> CFG;
 
     class IBinary
     {

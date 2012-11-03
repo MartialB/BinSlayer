@@ -1,5 +1,5 @@
-#ifndef DYNINSTBIN_HH_
-# define DYNINSTBIN_HH_
+#ifndef __DYNINSTBIN_HH__
+# define __DYNINSTBIN_HH__
 
 # include <list>
 # include <set>
@@ -39,24 +39,22 @@ namespace BinSlay {
       Dyninst::ParseAPI::SymtabCodeSource *_sts;
       Dyninst::ParseAPI::CodeObject *_co;
 
-      void build_cfg(
-		 Dyninst::ParseAPI::Function *f,
-		 BinSlay::ReverseAPI::CFG *cfg,
-		 std::list<Dyninst::ParseAPI::Block *> *blocks_list,
-		 std::map<Dyninst::Address, bool> &seen,
-		 int &level_of_depth,
-		 int &nb_basic_blocks
-      ) const;
+    private:
+      unsigned int get_fct_nb_internals_edges(Dyninst::ParseAPI::Function &f) const;
+      unsigned int get_fct_nb_incomming_calls(Dyninst::ParseAPI::Function &f) const;
+      unsigned int get_fct_nb_outcomming_calls(Dyninst::ParseAPI::Function &f) const;
+      Dyninst::ParseAPI::Function *get_fct_by_addr(Dyninst::Address addr) const;
 
-      void label_nb_jump_to_exit(
-		 Dyninst::ParseAPI::Function *f,
-		 BinSlay::ReverseAPI::CFG *cfg,
-		 std::map<Dyninst::Address, bool> &seen,
-		 std::vector<Dyninst::ParseAPI::Block *> *blist,
-		 int &level
-      ) const;
+      // void label_nb_jump_to_exit(
+      //  	 Dyninst::ParseAPI::Function &f,
+      // 	 BinSlay::ReverseAPI::CFG &cfg,
+      // 	 std::map<Dyninst::Address, bool> &seen,
+      // 	 std::vector<Dyninst::ParseAPI::Block *> &blist,
+      // 	 unsigned int &level
+      // ) const;
     };
+
   }
 }
 
-#endif // !DYNINSTBIN_HH_
+#endif // !__DYNINSTBIN_HH__

@@ -14,8 +14,12 @@ LINK_DIRECTORIES(${DYNINST_LIBS} ${BEAENGINE_LIBS})
 
 SET(
 	DYNINST_SRCS
-	DyninstBin.cpp
 	DyninstBin.hh
+	DyninstBin.cpp
+	CFG_Builder.hh
+	CFG_Builder.cpp
+	BB_Labelling.hh
+	BB_Labelling.cpp
 )
 
 ADD_LIBRARY(
