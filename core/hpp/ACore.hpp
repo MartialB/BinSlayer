@@ -36,26 +36,27 @@ namespace BinSlay
 	  BinSlay::ReverseAPI::IBinary &_bin_right)
       : _bin_left(_bin_left),
 	_bin_right(_bin_right),
-	_graph_left(NULL),
-	_graph_right(NULL),
-	_l_left(NULL),
-	_l_right(NULL),
-	_mapping(NULL),
-	_bindiff(NULL),
-	_ged(NULL)
+	_graph_left(nullptr),
+	_graph_right(nullptr),
+	_l_left(nullptr),
+	_l_right(nullptr),
+	_mapping(nullptr),
+	_bindiff(nullptr),
+	_ged(nullptr)
     {
       // Init '_selectors'
       _selectors.resize(3);
-      _selectors[0] = NULL;
-      _selectors[1] = NULL;
-      _selectors[2] = NULL;
+      _selectors[0] = nullptr;
+      _selectors[1] = nullptr;
+      _selectors[2] = nullptr;
       
       // Init '_properties'
       _properties.resize(2);
-      _properties[0] = NULL;
-      _properties[1] = NULL;
+      _properties[0] = nullptr;
+      _properties[1] = nullptr;
     }
 
+    // TODO: copy, '='
     //    ACore(ACore const &o);
     //ACore& operator=(ACore const &o);
 
@@ -63,29 +64,20 @@ namespace BinSlay
     virtual ~ACore()
     {
       // Clean the '_cg_mapping'
-      if (_mapping)
-	{
-	  for (typename BinSlay::bind_node<NodeType>::MAPPING::const_iterator it_map =
-		 _mapping->begin(); it_map != _mapping->end(); ++it_map)
-	    {
-	      for (typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST::const_iterator it_iso =
-		     (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso)
-		delete *it_iso;
-	      delete *it_map;
-	    }
-	  delete _mapping;
+      if (_mapping) {
+	for (auto it_map = _mapping->begin(); it_map != _mapping->end(); ++it_map) {
+	  for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso)
+	    delete *it_iso;
+	  delete *it_map;
 	}
-      
+	delete _mapping;
+      }
       // Delete selectors
-      for (typename BinSlay::bind_node<NodeType>::SELECTORS::const_iterator it = _selectors.begin();
-	   it != _selectors.end(); ++it)
-	delete *it;
-      
+      for (auto it_selec = _selectors.begin(); it_selec != _selectors.end(); ++it_selec)
+	delete *it_selec;
       // Delete properties
-      for (typename BinSlay::bind_node<NodeType>::PROPERTIES::const_iterator it = _properties.begin();
-	   it != _properties.end(); ++it)
-	delete *it;
-      
+      for (auto it_prop = _properties.begin(); it_prop != _properties.end(); ++it_prop)
+	delete *it_prop;      
       // Free allocated memory
       if (_l_left) delete _l_left;
       if (_l_right) delete _l_right;
@@ -99,7 +91,7 @@ namespace BinSlay
 
   public:
     // To retrieve the string associated with the last error
-    std::stringstream const &getErrorBuffer() const
+    std::stringstream const & getErrorBuffer() const
     {
       return this->_buf_error;
     }
@@ -107,37 +99,33 @@ namespace BinSlay
     // Function to add/remove a selector
     virtual void add_Selector(int idSelector)
     {
-      if (idSelector == cfg)
-	{
-	  _selectors[idSelector] = new BinSlay::BindiffSelector<NodeType>;
-	}
-      else if (idSelector == crc32)
+      if (idSelector == cfg) {
+	_selectors[idSelector] = new BinSlay::BindiffSelector<NodeType>;
+      } else if (idSelector == crc32) {
 	_selectors[idSelector] = new BinSlay::Crc32Selector<NodeType>;
+      }
     }
 
     void remove_Selector(int idSelector)
     {
       delete _selectors[idSelector];
-      _selectors[idSelector] = NULL;
+      _selectors[idSelector] = nullptr;
     }
 
     // Function to add/remove a property
     void add_Property(int idProperty)
     {
-      if (idProperty == up)
-	{
-	  _properties[idProperty] = new BinSlay::UpProperty<NodeType>;
-	}
-      else if (idProperty == down)
-	{
-	  _properties[idProperty] = new BinSlay::DownProperty<NodeType>;
-	}
+      if (idProperty == up) {
+	_properties[idProperty] = new BinSlay::UpProperty<NodeType>;
+      } else if (idProperty == down) {
+	_properties[idProperty] = new BinSlay::DownProperty<NodeType>;
+      }
     }
 
     void remove_Property(int idProperty)
     {
       delete _properties[idProperty];
-      _properties[idProperty] = NULL;  
+      _properties[idProperty] = nullptr;
     }
 
     // Run bindiff algorithm at the current level
@@ -148,31 +136,27 @@ namespace BinSlay
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
       ///////////////////////////////////
 
-      // Delete the previous '_bindiff' object
-      if (_bindiff) { delete _bindiff; _bindiff = NULL; }
+      // Delete the previous '_bindiff' object if it already exists
+      if (_bindiff) { delete _bindiff; _bindiff = nullptr; }
 
-      // Clean previous used lists of nodes
-      if (_l_left) { delete _l_left; _l_left = NULL; }
-      if (_l_right) { delete _l_right; _l_right = NULL; }
+      // Clean previous used lists of nodes if already exist
+      if (_l_left) { delete _l_left; _l_left = nullptr; }
+      if (_l_right) { delete _l_right; _l_right = nullptr; }
 
       // Create the list of nodes for each graph
       _l_left = _graph_left->CreateListOfNodes();
       _l_right = _graph_right->CreateListOfNodes();
 
-      // Clean the previous '_mapping'
-      if (_mapping)
-	{
-	  for (typename BinSlay::bind_node<NodeType>::MAPPING::const_iterator it_map =
-		 _mapping->begin(); it_map != _mapping->end(); ++it_map)
-	    {
-	      for (typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST::const_iterator it_iso =
-		     (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso)
-		delete *it_iso;
-	      delete *it_map;
-	    }
-	  delete _mapping;
-	  _mapping = NULL;
+      // Clean the previous '_mapping' if exists
+      if (_mapping) {
+	for (auto it_map = _mapping->begin(); it_map != _mapping->end(); ++it_map) {
+	  for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso)
+	    delete *it_iso;
+	  delete *it_map;
 	}
+	delete _mapping;
+	_mapping = nullptr;
+      }
 
       // Create an instance of the Bindiff object
       _bindiff = new BinSlay::Bindiff<NodeType>(*_l_left, *_l_right, _selectors, _properties);

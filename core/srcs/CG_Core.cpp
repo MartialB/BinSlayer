@@ -18,7 +18,8 @@ BinSlay::CG_Core::~CG_Core()
 {
 }
 
-bool BinSlay::CG_Core::load_graphs()
+bool
+BinSlay::CG_Core::load_graphs()
 {
   if (!load_graph_left())
     return false;
@@ -27,21 +28,24 @@ bool BinSlay::CG_Core::load_graphs()
   return true;
 }
 
-bool BinSlay::CG_Core::load_graph_left()
+bool
+BinSlay::CG_Core::load_graph_left()
 {
   if (!_graph_left)
     _graph_left = new BinSlay::CallGraph(&_bin_left);
   return true;
 }
 
-bool BinSlay::CG_Core::load_graph_right()
+bool
+BinSlay::CG_Core::load_graph_right()
 {
   if (!_graph_right)
     _graph_right = new BinSlay::CallGraph(&_bin_right);
   return true; 
 }
 
-void BinSlay::CG_Core::add_Selector(int idSelector)
+void
+BinSlay::CG_Core::add_Selector(int idSelector)
 {
   if (idSelector == name)
     _selectors[idSelector] = new BinSlay::SymNameSelector;
@@ -49,55 +53,55 @@ void BinSlay::CG_Core::add_Selector(int idSelector)
     BinSlay::ACore<BinSlay::FctNode>::add_Selector(idSelector);
 }
 
-bool BinSlay::CG_Core::run_bindiff_algorithm(int level)
+bool
+BinSlay::CG_Core::run_bindiff_algorithm(int level)
 {
       // ///////////////////////////////////
       // timespec start, end;
       // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
       // ///////////////////////////////////
 
-
   // Run the algorithm at the call-graph level
   BinSlay::ACore<BinSlay::FctNode>::run_bindiff_algorithm(level);
 
   // Run it at the CFG level if desired to be more accurate
-  if (level >= 2)
-    {
-      _run_bindiff_at_cfg_level();
-    }
+  if (level >= 2) {
+    _run_bindiff_at_cfg_level();
+  }
 
-      // //////////////////////////////////
-      // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-      // std::cout << "Bindiff time: ";
-      // if ((end.tv_nsec-start.tv_nsec) < 0)
-      // 	{
-      // 	  std::cout << end.tv_sec - start.tv_sec - 1 << ":";
-      // 	  std::cout << 1000000000 + end.tv_nsec - start.tv_nsec << std::endl;;
-      // 	}
-      // else
-      // 	{
-      // 	  std::cout << end.tv_sec - start.tv_sec << ":";
-      // 	  std::cout << end.tv_nsec - start.tv_nsec << std::endl;
-      // 	}
-      // //////////////////////////////////
+  // //////////////////////////////////
+  // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+  // std::cout << "Bindiff time: ";
+  // if ((end.tv_nsec-start.tv_nsec) < 0)
+  // 	{
+  // 	  std::cout << end.tv_sec - start.tv_sec - 1 << ":";
+  // 	  std::cout << 1000000000 + end.tv_nsec - start.tv_nsec << std::endl;;
+  // 	}
+  // else
+  // 	{
+  // 	  std::cout << end.tv_sec - start.tv_sec << ":";
+  // 	  std::cout << end.tv_nsec - start.tv_nsec << std::endl;
+  // 	}
+  // //////////////////////////////////
 
   return true;
 }
 
-bool BinSlay::CG_Core::compute_ged(int level)
+// TODO; a function to run bindiff at the cfg level
+// TODO: we should be able to dynamically chose if we want the selector to run
+bool
+BinSlay::CG_Core::compute_ged(int level) // bool withSelector ?
 {
-      ///////////////////////////////////
-      timespec start, end;
-      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-      ///////////////////////////////////
-
+  ///////////////////////////////////
+  timespec start, end;
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+  ///////////////////////////////////
 
   // Set the initial threshold
   double threshold = 70.0;
 
   // Create the final edit path list
-  BinSlay::bind_node<FctNode>::ISOMORPHES_LIST *final_ep = 
-    new typename BinSlay::bind_node<FctNode>::ISOMORPHES_LIST;
+  auto *final_ep = new typename BinSlay::bind_node<FctNode>::ISOMORPHES_LIST;
 
   // Create Bindiff selectors/properties for the cfg level
   typename BinSlay::bind_node<BinSlay::BbNode>::SELECTORS cfg_selectors;
@@ -114,76 +118,42 @@ bool BinSlay::CG_Core::compute_ged(int level)
   BinSlay::ACore<BinSlay::FctNode>::compute_ged();
 
   // Get the Edit Path
-  BinSlay::bind_node<FctNode>::ISOMORPHES_LIST *tmp_ep = this->_ged->get_edit_path();
+  auto *tmp_ep = this->_ged->get_edit_path();
 
-  // for (typename BinSlay::bind_node<BinSlay::FctNode>::ISOMORPHES_LIST::iterator it_iso =
-  // 	 tmp_ep->begin(); it_iso != tmp_ep->end(); ++it_iso)
-  //   {
-  //     if ((*it_iso)->getLeft())
-  // 	std::cout << "addr left: " << std::hex << (*it_iso)->getLeft()->getAddr();
-  //     if ((*it_iso)->getRight())
-  // 	std::cout << " - addr right: " << std::hex << (*it_iso)->getRight()->getAddr();
-  //     std::cout << std::endl;
-  //     // std::cout << "(*it_iso)->getLeft(): " << (*it_iso)->getLeft()
-  //     // 		<< " - (*it_iso)->getRight(): " << (*it_iso)->getRight() << std::endl;
-  //   }
-
+  // TODO: two cases, with the selector and without
 
   //  std::cout << ">>>>>>>>>>>>>>>>>>> Start the validator <<<<<<<<<<<<<<<" << std::endl;
   while (threshold >= 5.0)
     {
-      //      std::cout << "Threshold: " << threshold << std::endl;
       // Create tmp unmatched node lists
-      typename BinSlay::bind_node<FctNode>::NODES_LIST *tmp_u1 =
-  	new typename BinSlay::bind_node<FctNode>::NODES_LIST;
-      typename BinSlay::bind_node<FctNode>::NODES_LIST *tmp_u2 =
-  	new typename BinSlay::bind_node<FctNode>::NODES_LIST;
+      auto *tmp_u1 = new typename BinSlay::bind_node<FctNode>::NODES_LIST;
+      auto *tmp_u2 = new typename BinSlay::bind_node<FctNode>::NODES_LIST;
 
+      // Record the updated cost we want to apply
       std::list<std::pair<
   	std::pair<unsigned int, unsigned int>,
   	unsigned int >
-  		> cost_to_update;
-
-      //      std::cout << "tmp_ep size = " << tmp_ep->size() << std::endl;
+      > cost_to_update;
 
       unsigned int idx_left = 0;
       unsigned int idx_right = 0;
 
-
-      // std::cout << ">>>>>>>>>>>>>>>>>>> Before Bindiff check <<<<<<<<<<<<<<<" << std::endl;
-      // std::cout << std::dec << "nb elems in tmp ep = " << tmp_ep->size() << std::endl;
-      // for (typename BinSlay::bind_node<BinSlay::FctNode>::ISOMORPHES_LIST::iterator it_iso =
-      // 	     tmp_ep->begin(); it_iso != tmp_ep->end(); ++it_iso)
-      // 	{
-      // 	  if ((*it_iso)->getLeft())
-      // 	    std::cout << "addr left: " << std::hex << (*it_iso)->getLeft()->getAddr();
-      // 	  if ((*it_iso)->getRight())
-      // 	    std::cout << " - addr right: " << std::hex << (*it_iso)->getRight()->getAddr();
-      // 	  std::cout << std::endl;
-      // 	  // std::cout << "(*it_iso)->getLeft(): " << (*it_iso)->getLeft()
-      // 	  // 		<< " - (*it_iso)->getRight(): " << (*it_iso)->getRight() << std::endl;
-      // 	}
-
-
-      for (typename BinSlay::bind_node<BinSlay::FctNode>::ISOMORPHES_LIST::iterator it_iso =
-  	     tmp_ep->begin(); it_iso != tmp_ep->end();/* no incrementation here */)
+      for (auto it_iso = tmp_ep->begin(); it_iso != tmp_ep->end();/* no incrementation here */)
   	{
-  	  if (!(*it_iso)->getLeft())
-  	    {
-  	      tmp_u2->push_back((*it_iso)->getRight());
-  	      delete *it_iso;
-  	      it_iso = tmp_ep->erase(it_iso);
-  	      ++idx_right;
-  	      continue;
-  	    }
-  	  if (!(*it_iso)->getRight())
-  	    {
-  	      tmp_u1->push_back((*it_iso)->getLeft());
-  	      delete *it_iso;
-  	      it_iso = tmp_ep->erase(it_iso);
-  	      ++idx_left;
-  	      continue;
-  	    }
+  	  if (!(*it_iso)->getLeft()) {
+	    tmp_u2->push_back((*it_iso)->getRight());
+	    delete *it_iso;
+	    it_iso = tmp_ep->erase(it_iso);
+	    ++idx_right;
+	    continue;
+	  }
+  	  if (!(*it_iso)->getRight()) {
+	    tmp_u1->push_back((*it_iso)->getLeft());
+	    delete *it_iso;
+	    it_iso = tmp_ep->erase(it_iso);
+	    ++idx_left;
+	    continue;
+	  }
 
   	  // Create the CFG objects
   	  BinSlay::CFG *cfg_left =
@@ -192,37 +162,36 @@ bool BinSlay::CG_Core::compute_ged(int level)
   	    new BinSlay::CFG(&_bin_right, (*it_iso)->getRight()->getAddr());
 
   	  // Create the list of nodes for each graph
-  	  typename BinSlay::bind_node<BinSlay::BbNode>::NODES_LIST *cfg_l_left =
-  	    cfg_left->CreateListOfNodes();
-  	  typename BinSlay::bind_node<BinSlay::BbNode>::NODES_LIST *cfg_l_right =
-  	    cfg_right->CreateListOfNodes();
+  	  auto *cfg_l_left = cfg_left->CreateListOfNodes();
+  	  auto *cfg_l_right = cfg_right->CreateListOfNodes();
 
   	  // Create an instance of the Bindiff object
-  	  BinSlay::Bindiff<BinSlay::BbNode> *cfg_bindiff =
-  	    new BinSlay::Bindiff<BinSlay::BbNode>(*cfg_l_left, *cfg_l_right,
-  	  			     cfg_selectors, cfg_properties);
+  	  auto *cfg_bindiff = new BinSlay::Bindiff<BinSlay::BbNode>(
+			       	*cfg_l_left,
+				*cfg_l_right,
+				cfg_selectors,
+				cfg_properties
+			      );
 
   	  // Call the run method and retrieve the MAPPING
-  	  typename BinSlay::bind_node<BinSlay::BbNode>::MAPPING *cfg_mapping = cfg_bindiff->run();
+  	  auto *cfg_mapping = cfg_bindiff->run();
   	  cfg_bindiff->re_run(*cfg_mapping);
 
   	  // Get the number of isomorphims found
   	  double cfg_nb_isomorphims = 0;
-  	  for (typename BinSlay::bind_node<BinSlay::BbNode>::MAPPING::const_iterator it_map_cfg =
-  	  	 cfg_mapping->begin(); it_map_cfg != cfg_mapping->end(); ++it_map_cfg)
-  	    for (typename BinSlay::bind_node<BinSlay::BbNode>::ISOMORPHES_LIST::const_iterator it_iso =
-  	  	   (*it_map_cfg)->begin(); it_iso != (*it_map_cfg)->end(); ++it_iso)
+  	  for (auto it_map_cfg = cfg_mapping->begin(); it_map_cfg != cfg_mapping->end();
+	       ++it_map_cfg)
+  	    for (auto it_iso = (*it_map_cfg)->begin(); it_iso != (*it_map_cfg)->end(); ++it_iso)
   	      ++cfg_nb_isomorphims;
 
   	  // Clean the cfg_mapping
-  	  for (typename BinSlay::bind_node<BinSlay::BbNode>::MAPPING::const_iterator it_map_cfg =
-  	  	 cfg_mapping->begin(); it_map_cfg != cfg_mapping->end(); ++it_map_cfg)
-  	    {
-  	      for (typename BinSlay::bind_node<BinSlay::BbNode>::ISOMORPHES_LIST::const_iterator
-  	  	     it_iso = (*it_map_cfg)->begin(); it_iso != (*it_map_cfg)->end(); ++it_iso)
-  	  	delete *it_iso;
-  	      delete *it_map_cfg;
-  	    }
+  	  for (auto it_map_cfg = cfg_mapping->begin(); it_map_cfg != cfg_mapping->end();
+	       ++it_map_cfg) {
+	    for (auto it_iso = (*it_map_cfg)->begin(); it_iso != (*it_map_cfg)->end(); ++it_iso) {
+	      delete *it_iso;
+	    }
+	    delete *it_map_cfg;
+	  }
 
   	  // Get the percentage of similarty between the two compared graphs
   	  unsigned int max = cfg_left->getnbNode() <= cfg_right->getnbNode() ?
@@ -277,7 +246,6 @@ bool BinSlay::CG_Core::compute_ged(int level)
       // Decrease the threshold
       threshold -= 5.0;
 
-
       // Delete prev edit path
       if (threshold >= 5.0)
       	{
@@ -301,23 +269,19 @@ bool BinSlay::CG_Core::compute_ged(int level)
       // 	}
       // std::cout << std::endl;
 
-      // Re-compute GED and get the resulting edit path
+      // Create a new GraphED object with tmp_u1 and tmp_u2 lists of nodes
       BinSlay::GraphED<FctNode> *tmp_ged =
       	new BinSlay::GraphED<FctNode>(*_graph_left, *_graph_right, *tmp_u1, *tmp_u2);
-
-      for (std::list<std::pair<std::pair<unsigned int, unsigned int >, unsigned int > >::\
-  	     const_iterator it =
-      	     cost_to_update.begin(); it != cost_to_update.end(); ++it)
-      	{
-      	  tmp_ged->update_cost(it->second, it->first.first, it->first.second);
-      	}
+      // Update costs
+      for (auto it = cost_to_update.begin(); it != cost_to_update.end(); ++it) {
+	tmp_ged->update_cost(it->second, it->first.first, it->first.second);
+      }
+      // Re-compute GED with tmp_u1 and tmp_u2 and get the resulting edit path
       tmp_ged->compute();
-
-      // Get new edit path
       tmp_ep = tmp_ged->get_edit_path();
-      delete tmp_ged;
 
-      // Delete unmatched lists
+      // Clean
+      delete tmp_ged;
       delete tmp_u1;
       delete tmp_u2;
     }

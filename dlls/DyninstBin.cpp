@@ -102,8 +102,7 @@ BinSlay::ReverseAPI::DyninstBin::DyninstBin(std::string path)
 
 #ifdef BINSLAYER_DEBUG
   std::cerr << "# Number of functions found: " << std::dec << this->_co->funcs().size() << std::endl;
-  for (Dyninst::ParseAPI::CodeObject::funclist::iterator it_fct =
-	 this->_co->funcs().begin(); it_fct != this->_co->funcs().end(); ++it_fct)
+  for (auto it_fct = this->_co->funcs().begin(); it_fct != this->_co->funcs().end(); ++it_fct)
     {
       std::cout << "Name: " << (*it_fct)->name()
 		<< " - nb basic blocks: " << std::dec << (*it_fct)->blocks().size()
@@ -135,11 +134,9 @@ BinSlay::ReverseAPI::DyninstBin::get_fct_nb_internals_edges(
 {
   unsigned int nb_internal_edges = 0;
 
-  for(Dyninst::ParseAPI::Function::blocklist::iterator it_block =
-	f.blocks().begin(); it_block != f.blocks().end(); ++it_block) {
-    for (Dyninst::ParseAPI::Block::edgelist::iterator it_edge =
-	   (*it_block)->targets().begin(); it_edge != (*it_block)->targets().end();
-	 ++it_edge) {
+  for(auto it_block = f.blocks().begin(); it_block != f.blocks().end(); ++it_block) {
+    for (auto it_edge = (*it_block)->targets().begin();
+	 it_edge != (*it_block)->targets().end(); ++it_edge) {
       if ((*it_edge)->type() != Dyninst::ParseAPI::CALL &&
 	  (*it_edge)->type() != Dyninst::ParseAPI::RET)
 	++nb_internal_edges;
@@ -160,7 +157,7 @@ BinSlay::ReverseAPI::DyninstBin::get_fct_nb_incomming_calls(
   unsigned int nb_incomming_calls = 0;
   std::map<Dyninst::Address, bool> visited;
   
-  for(Dyninst::ParseAPI::Block::edgelist::iterator it_edge = f.entry()->sources().begin();
+  for(auto it_edge = f.entry()->sources().begin();
       it_edge != f.entry()->sources().end(); ++it_edge) {
     // Do not revisit same edges in shared code
     if (visited.find((*it_edge)->src()->start()) != visited.end())
@@ -184,7 +181,7 @@ BinSlay::ReverseAPI::DyninstBin::get_fct_nb_outcomming_calls(
   unsigned int nb_outcomming_calls = 0;
   std::map<Dyninst::Address, bool> visited;
   
-  for(Dyninst::ParseAPI::Function::edgelist::iterator it_edge = f.callEdges().begin();
+  for(auto it_edge = f.callEdges().begin();
       it_edge != f.callEdges().end(); ++it_edge) {
     // Do not revisit same edges in shared code
     if (visited.find((*it_edge)->src()->start()) != visited.end())
@@ -294,7 +291,7 @@ BinSlay::ReverseAPI::DyninstBin::recover_function_cfg(
   // Initialize the list of basic blocks with the function entry block
   std::list<Dyninst::ParseAPI::Block *> blocks_list;
   blocks_list.push_front(f.entry());
-  // Instanciate and launch cfg builder functor with top-down graph traversal
+  // Instanciate and launch CFG_Builder functor with top-down graph traversal
   BinSlay::ReverseAPI::CFG_BreadthFirstSearch<
     BinSlay::ReverseAPI::CFG_Builder
   > top_down(*this, f, *cfg);
@@ -396,82 +393,61 @@ static unsigned int crc32table[256] =	{
 unsigned int
 BinSlay::ReverseAPI::DyninstBin::get_function_size(Address addr) const
 {
-  Dyninst::ParseAPI::Function *f = nullptr;
-  Dyninst::ParseAPI::CodeObject::funclist &all = this->_co->funcs();
-  Dyninst::ParseAPI::CodeObject::funclist::iterator fit = all.begin();
+  // Retrieve the associated Function object
+  Dyninst::ParseAPI::Function &f = *this->get_fct_by_addr(addr);
 
-  // Retrieve a ptr on the desired 'Function' object
-  for (; fit != all.end(); ++fit)
-    {
-      if ((*fit)->entry()->start() == addr)
-	{
-	  f = *fit;
-	  break;
-	}
-    }
   // "The blocks are guaranteed to be sorted by starting address"
-  // Get the low address of this function
-  unsigned char *fstart = (unsigned char *)(this->_sts->getPtrToInstruction(f->entry()->start()));
-  // Get the last block
+  // Get the low address of the function
+  uintptr_t fstart = reinterpret_cast<uintptr_t>(this->_sts->getPtrToInstruction(f.entry()->start()));
+
+  // Get the last block : dyninst container has not reverse iterator :(
   Dyninst::ParseAPI::Function::blocklist::iterator last;
-  for(Dyninst::ParseAPI::Function::blocklist::iterator it_block = f->blocks().begin();
-      it_block != f->blocks().end(); ++it_block)
-    {
-      last = it_block;
-    }
-  // Get the high address of this function
-  unsigned char *fend = (unsigned char *)(this->_sts->getPtrToInstruction((*last)->end()));
+  for(auto it_block = f.blocks().begin(); it_block != f.blocks().end(); ++it_block) {
+    last = it_block;
+  }
+
+  // Get the high address of the function
+  uintptr_t fend = reinterpret_cast<uintptr_t>(this->_sts->getPtrToInstruction((*last)->end()));
+
   return fend - fstart;
 }
 
 BinSlay::ReverseAPI::Crc32
 BinSlay::ReverseAPI::DyninstBin::get_function_crc32(Address addr) const
 {
-  Dyninst::ParseAPI::Function *f = nullptr;
-  Dyninst::ParseAPI::CodeObject::funclist &all = this->_co->funcs();
-  Dyninst::ParseAPI::CodeObject::funclist::iterator fit = all.begin();
+  Dyninst::ParseAPI::Function &f = *this->get_fct_by_addr(addr);
 
-  // Retrieve a ptr on the desired 'Function' object
-  for (; fit != all.end(); ++fit)
-    {
-      if ((*fit)->entry()->start() == addr)
-	{
-	  f = *fit;
-	  break;
-	}
-    }
   // "The blocks are guaranteed to be sorted by starting address"
   // Get the low address of this function
-  unsigned char *fstart = (unsigned char *)(this->_sts->getPtrToInstruction(f->entry()->start()));
+  uintptr_t fstart = reinterpret_cast<uintptr_t>(this->_sts->getPtrToInstruction(f.entry()->start()));
+
   // Get the last block
   Dyninst::ParseAPI::Function::blocklist::iterator last;
-  for(Dyninst::ParseAPI::Function::blocklist::iterator it_block = f->blocks().begin();
-      it_block != f->blocks().end(); ++it_block)
-    {
-      last = it_block;
-    }
+  for(auto it_block = f.blocks().begin(); it_block != f.blocks().end(); ++it_block) {
+    last = it_block;
+  }
+
   // Get the high address of this function
-  unsigned char *fend = (unsigned char *)(this->_sts->getPtrToInstruction((*last)->end()));
-  if (fend) // Why fend == 0 sometimes ???
-    {
-      // Allocate and create a decoder
-      Dyninst::InstructionAPI::InstructionDecoder *decoder =
-	new Dyninst::InstructionAPI::InstructionDecoder(
-	   this->_sts->getPtrToInstruction(f->entry()->start()),
+  uintptr_t fend = reinterpret_cast<uintptr_t>(this->_sts->getPtrToInstruction((*last)->end()));
+
+  if (fend) { // TODO: Why fend == 0 sometimes ???
+    // Allocate and create a decoder
+    Dyninst::InstructionAPI::InstructionDecoder *decoder =
+      new Dyninst::InstructionAPI::InstructionDecoder(
+	   this->_sts->getPtrToInstruction(f.entry()->start()),
 	   fend - fstart,
 	   this->_sts->getArch()
-  	);
+      );
 
-      // Compute the CRC32 of this function based on the opcodes
-      unsigned int crc = ~0; // the initial value of a CRC32 is 0xFFFFFFFF.
-      Dyninst::InstructionAPI::Instruction::Ptr instr;
-      while ((instr = decoder->decode()))
-	{
-	  crc = (crc >> 8) ^ crc32table[instr->getOperation().getID() ^ (crc & 0xFF)];
-	}
-      delete decoder;
-      return crc;
+    // Compute the CRC32 of this function based on the opcodes
+    unsigned int crc = ~0; // the initial value of a CRC32 is 0xFFFFFFFF.
+    Dyninst::InstructionAPI::Instruction::Ptr instr;
+    while ((instr = decoder->decode())) {
+      crc = (crc >> 8) ^ crc32table[instr->getOperation().getID() ^ (crc & 0xFF)];
     }
+    delete decoder;
+    return crc;
+  }
   return 0;
 }
 
@@ -494,10 +470,9 @@ BinSlay::ReverseAPI::DyninstBin::get_basic_block_nbInstrs(Address addr) const
 
   unsigned int nbInstrs = 0;
   Dyninst::InstructionAPI::Instruction::Ptr instr;
-  while ((instr = decoder->decode()))
-    {
-      ++nbInstrs;
-    }
+  while ((instr = decoder->decode())) {
+    ++nbInstrs;
+  }
   delete decoder;
   return nbInstrs;
 }
@@ -522,10 +497,9 @@ BinSlay::ReverseAPI::DyninstBin::get_basic_block_crc32(Address addr) const
   // Compute the CRC32 of this basic blocks based on the opcodes
   unsigned int crc = ~0; // the initial value of a CRC32 is 0xFFFFFFFF.
   Dyninst::InstructionAPI::Instruction::Ptr instr;
-  while ((instr = decoder->decode()))
-    {
-      crc = (crc >> 8) ^ crc32table[instr->getOperation().getID() ^ (crc & 0xFF)];
-    }
+  while ((instr = decoder->decode())) {
+    crc = (crc >> 8) ^ crc32table[instr->getOperation().getID() ^ (crc & 0xFF)];
+  }
   delete decoder;
   return crc;  
 }
