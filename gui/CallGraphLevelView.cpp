@@ -1,6 +1,7 @@
 #include "CallGraphLevelView.h"
 #include "CFGLevelView.h"
 #include "ShowFunctionView.h"
+#include "BinDiff.hh"
 
 typedef BinSlay::FctNode NodeType;
 
@@ -317,9 +318,9 @@ void BinSlay::Gui::CallGraphLevelView::doEditUpProperty(bool state)
   if (!_core)
     return;
   if (state)
-    _core->add_Property(up);
+    _core->add_Property(BinSlay::idProperties::UP);
   else
-    _core->remove_Property(up);  
+    _core->remove_Property(BinSlay::idProperties::UP);
 }
 
 void BinSlay::Gui::CallGraphLevelView::doEditDownProperty(bool state)
@@ -327,19 +328,17 @@ void BinSlay::Gui::CallGraphLevelView::doEditDownProperty(bool state)
   if (!_core)
     return;
   if (state)
-    _core->add_Property(down);
+    _core->add_Property(BinSlay::idProperties::DOWN);
   else
-    _core->remove_Property(down);
+    _core->remove_Property(BinSlay::idProperties::DOWN);
 }
 
 void BinSlay::Gui::CallGraphLevelView::doEditCgLevel(bool)
 {
-  
 }
 
 void BinSlay::Gui::CallGraphLevelView::doEditCfgLevel(bool)
-{
-  
+{ 
 }
 
 // void BinSlay::Gui::CallGraphLevelView::doEditBbLevel(bool state)
@@ -364,9 +363,9 @@ void BinSlay::Gui::CallGraphLevelView::doEditBindiffSelector(bool state)
   if (!_core)
     return ;
   if (state)
-    _core->add_Selector(cfg);
+    _core->add_Selector(BinSlay::idSelectors::CFG);
   else
-    _core->remove_Selector(cfg);
+    _core->remove_Selector(BinSlay::idSelectors::CFG);
 }
 
 void BinSlay::Gui::CallGraphLevelView::doEditCrc32Selectors(bool state)
@@ -374,9 +373,9 @@ void BinSlay::Gui::CallGraphLevelView::doEditCrc32Selectors(bool state)
   if (!_core)
     return ;
   if (state)
-    _core->add_Selector(crc32);
+    _core->add_Selector(BinSlay::idSelectors::CRC32);
   else
-    _core->remove_Selector(crc32);  
+    _core->remove_Selector(BinSlay::idSelectors::CRC32);
 }
 
 void BinSlay::Gui::CallGraphLevelView::doEditSymNameSelectors(bool state)
@@ -384,9 +383,9 @@ void BinSlay::Gui::CallGraphLevelView::doEditSymNameSelectors(bool state)
   if (!_core)
     return ;
   if (state)
-    _core->add_Selector(name);
+    _core->add_Selector(BinSlay::idSelectors::NAME);
   else
-    _core->remove_Selector(name);  
+    _core->remove_Selector(BinSlay::idSelectors::NAME);
 }
 
 void BinSlay::Gui::CallGraphLevelView::doDiffFunctions_fromIsoList()
@@ -814,122 +813,17 @@ void BinSlay::Gui::CallGraphLevelView::run_bindiff()
 {
   if (!_core)
     return ;
-  // Get the desired level: at least equal to ONE !
-  int level = 1;
+  // Get the desired level (0 => CG, 1 => CFG)
+  int level = 0;
   if (checkBoxLevels[fcfg]->isChecked())
     ++level;
-  // if (checkBoxLevels[bb]->isChecked())
-  //   ++level;
-  //  std::cout << "Level = " << level << std::endl;
-
   // Run algorithm
-  if (!_core->run_bindiff_algorithm(level))
+  if (!_core->run_bindiff_algorithm(static_cast<BinSlay::DiffingLevel>(level)))
     return;
-
   // Reset the view
   reset_bindiff();
-
   // Display the results of the bindiff algorithm in the 'isoListView'
   _display_bindiff_results();
-  // double nb_isomorphims = 0;
-  // int row = 0;
-  // std::stringstream convertor;
-
-  // // Fill the matched functions view for the call Graph level
-  // for (BinSlay::MAPPING::const_iterator it_map = _core->get_mapping().begin();
-  //      it_map != _core->get_mapping().end(); ++it_map)
-  //   {
-  //     for (BinSlay::ISOMORPHES_LIST::const_iterator it_iso = (*it_map)->begin();
-  // 	   it_iso != (*it_map)->end(); ++it_iso)
-  // 	{
-  // 	  // Fill the TableWidget
-  // 	  row = isoListView->rowCount();
-  // 	  isoListView->insertRow(row);
-
-  // 	  // RecLevel 
-  // 	  convertor << std::dec << (*it_iso)->getLevel();
-  // 	  QTableWidgetItem *reclevel = new QTableWidgetItem(convertor.str().c_str());
-  // 	  convertor.str(std::string());
-  // 	  convertor.clear();
-
-  // 	  // Addr left
-  // 	  convertor << std::hex << (*it_iso)->getLeft()->getAddr();
-  // 	  QTableWidgetItem *addrleft = new QTableWidgetItem(convertor.str().c_str());
-  // 	  convertor.str(std::string());
-  // 	  convertor.clear();
-
-  // 	  // Name left
-  // 	  QTableWidgetItem *nameleft = new QTableWidgetItem((*it_iso)->getLeft()->getName().c_str());
-
-  // 	  // Addr right
-  // 	  convertor << std::hex << (*it_iso)->getRight()->getAddr();
-  // 	  QTableWidgetItem *addright = new QTableWidgetItem(convertor.str().c_str());
-  // 	  convertor.str(std::string());
-  // 	  convertor.clear();
-
-  // 	  // Name right
-  // 	  QTableWidgetItem *nameright =
-  // 	    new QTableWidgetItem(tr((*it_iso)->getRight()->getName().c_str()));
-
-  // 	  isoListView->setItem(row, 0, reclevel);
-  // 	  isoListView->setItem(row, 1, addrleft);
-  // 	  isoListView->setItem(row, 2, nameleft);
-  // 	  isoListView->setItem(row, 3, addright);
-  // 	  isoListView->setItem(row, 4, nameright);
-
-  // 	  ++nb_isomorphims;
-  // 	}
-  //   }
-
-  // // Fill the unmatched view for the call-graph level
-  // for (BinSlay::NODES_LIST::const_iterator it = _core->get_list_left().begin();
-  //      it != _core->get_list_left().end(); ++it)
-  //   {
-  // 	  // Fill the TableWidget
-  // 	  row = matchedFunctionsView->rowCount();
-  // 	  matchedFunctionsView->insertRow(row);
-
-  // 	  // Addr left
-  // 	  convertor << std::hex << (*it)->getAddr();
-  // 	  QTableWidgetItem *addrleft = new QTableWidgetItem(convertor.str().c_str());
-  // 	  convertor.str(std::string());
-  // 	  convertor.clear();
-
-  // 	  // Name left
-  // 	  QTableWidgetItem *nameleft = new QTableWidgetItem((*it)->getName().c_str());
-
-  // 	  matchedFunctionsView->setItem(row, 0, addrleft);
-  // 	  matchedFunctionsView->setItem(row, 1, nameleft);
-  //   }
-  // for (BinSlay::NODES_LIST::const_iterator it = _core->get_list_right().begin();
-  //      it != _core->get_list_right().end(); ++it)
-  //   {
-  // 	  // Fill the TableWidget
-  // 	  row = unmatchedFunctionsView->rowCount();
-  // 	  unmatchedFunctionsView->insertRow(row);
-
-  // 	  // Addr left
-  // 	  convertor << std::hex << (*it)->getAddr();
-  // 	  QTableWidgetItem *addright = new QTableWidgetItem(convertor.str().c_str());
-  // 	  convertor.str(std::string());
-  // 	  convertor.clear();
-
-  // 	  // Name left
-  // 	  QTableWidgetItem *nameright = new QTableWidgetItem((*it)->getName().c_str());
-
-  // 	  unmatchedFunctionsView->setItem(row, 0, addright);
-  // 	  unmatchedFunctionsView->setItem(row, 1, nameright);
-  //   }
-
-  // // Display the percentage of similarty between the two compared graphs
-  // int max = _core->getNbNodeInGraphLeft() < _core->getNbNodeInGraphRight() ?
-  //   _core->getNbNodeInGraphLeft() : _core->getNbNodeInGraphRight();
-
-  // convertor << "Left: " << std::dec << nb_isomorphims << "/" << _core->getNbNodeInGraphLeft()
-  // 	    << " - Right: " << std::dec << nb_isomorphims << "/" << _core->getNbNodeInGraphRight()
-  // 	    << " => Percentage: " << (nb_isomorphims / max * 100.0) << "%";
-  
-  // bindiffLineEdit->setText(convertor.str().c_str());
 }
 
 void BinSlay::Gui::CallGraphLevelView::reset_bindiff()
@@ -966,8 +860,8 @@ void BinSlay::Gui::CallGraphLevelView::compute_ged()
   if (!_core)
     return ;
 
-  // Get the desired level: at least equal to ONE !
-  int level = 1;
+  // Get the desired level (0 => CG, 1 => CFG)
+  int level = 0;
   if (checkBoxLevels[fcfg]->isChecked())
     ++level;
 
@@ -975,9 +869,10 @@ void BinSlay::Gui::CallGraphLevelView::compute_ged()
 
   // Reset the view
   reset_ged();
-
   // Compute ged
-  _core->compute_ged(level);
+  // TODO: options - level -> two arguments
+  _core->compute_ged(BinSlay::gedProperties::WITH_VALIDATOR);
+  //  _core->compute_ged(BinSlay::gedProperties::NO_OPTIONS);
 
   // Display GED results
   convertor << _core->get_ged();

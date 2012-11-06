@@ -3,6 +3,7 @@
 
 # include <QtGui>
 # include "InternalsCore.hh"
+# include "BinDiff.hh"
 
 namespace BinSlay {
   namespace Gui {

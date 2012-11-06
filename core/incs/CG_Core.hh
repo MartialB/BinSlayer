@@ -5,9 +5,11 @@
  * \date 30/06/2012
  */
 
-#ifndef CG_CORE_HH_
-# define CG_CORE_HH_
+#ifndef __CG_CORE_HH__
+# define __CG_CORE_HH__
 
+# include "BinDiff.hh"
+# include "Ged.hh"
 # include "ACore.hpp"
 # include "CallGraph.hh"
 # include "FctNode.hh"
@@ -27,13 +29,13 @@ namespace BinSlay
     virtual bool load_graphs();
     virtual bool load_graph_left();
     virtual bool load_graph_right();
-    virtual void add_Selector(int idSelector);
-    virtual bool run_bindiff_algorithm(int level);
-    virtual bool compute_ged(int level);
+    virtual void add_Selector(BinSlay::idSelectors::idSelectors_e idSelector);
+    virtual bool run_bindiff_algorithm(BinSlay::DiffingLevel level);
+    virtual bool compute_ged(BinSlay::gedProperties::gedProperties_e options);
 
   private:
     void _run_bindiff_at_cfg_level();
   };
 }
 
-#endif // !CG_CORE_HH_
+#endif // !__CG_CORE_HH__

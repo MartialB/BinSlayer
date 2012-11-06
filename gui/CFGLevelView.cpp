@@ -276,17 +276,17 @@ void BinSlay::Gui::CFGLevelView::createGedGroupBox()
 void BinSlay::Gui::CFGLevelView::doEditUpProperty(bool state)
 {
   if (state)
-    _core.add_Property(up);
+    _core.add_Property(BinSlay::idProperties::UP);
   else
-    _core.remove_Property(up);  
+    _core.remove_Property(BinSlay::idProperties::UP);
 }
 
 void BinSlay::Gui::CFGLevelView::doEditDownProperty(bool state)
 {
   if (state)
-    _core.add_Property(down);
+    _core.add_Property(BinSlay::idProperties::DOWN);
   else
-    _core.remove_Property(down);
+    _core.remove_Property(BinSlay::idProperties::DOWN);
 }
 
 void BinSlay::Gui::CFGLevelView::doEditCfgLevel(bool)
@@ -299,22 +299,20 @@ void BinSlay::Gui::CFGLevelView::doEditCfgLevel(bool)
 
 void BinSlay::Gui::CFGLevelView::doEditBindiffSelector(bool state)
 {
-  // std::cout << "Gui: add bindif selector !" << std::endl;
   if (state)
     {
-      // std::cout << "Gui: add bindif selector !" << std::endl;
-      _core.add_Selector(cfg);
+      _core.add_Selector(BinSlay::idSelectors::CFG);
     }
   else
-    _core.remove_Selector(cfg);
+    _core.remove_Selector(BinSlay::idSelectors::CFG);
 }
 
 void BinSlay::Gui::CFGLevelView::doEditCrc32Selectors(bool state)
 {
   if (state)
-    _core.add_Selector(crc32);
+    _core.add_Selector(BinSlay::idSelectors::CRC32);
   else
-    _core.remove_Selector(crc32);  
+    _core.remove_Selector(BinSlay::idSelectors::CRC32);
 }
 
 void BinSlay::Gui::CFGLevelView::doShowBasicBlock_fromIsoList()
@@ -701,16 +699,9 @@ void BinSlay::Gui::CFGLevelView::_display_bindiff_results()
 
 void BinSlay::Gui::CFGLevelView::run_bindiff()
 {
-  // Get the desired level: at least equal to ONE !
-  int level = 1;
-  // if (checkBoxLevels[bb]->isChecked())
-  //   ++level;
-  // std::cout << "Level = " << level << std::endl;
-
   // Run algorithm
-  if (!_core.run_bindiff_algorithm(level))
+  if (!_core.run_bindiff_algorithm())
     return;
-
   // Display results
   _display_bindiff_results();  
 }

@@ -1,12 +1,12 @@
 /**
- * \file Bindiff.hh
+ * \file Bindiff.hhp
  * \author Martial Bourquin
  * \version 1.0
  * \date 30/06/2012
  */
 
-#ifndef BINDIFF_HH_
-# define BINDIFF_HH_
+#ifndef __BINDIFF_HHP__
+# define __BINDIFF_HHP__
 
 # include <vector>
 # include "BinSlay.hpp"
@@ -409,4 +409,4 @@ namespace BinSlay
   };
 }
 
-#endif // !BINDIFF_HH_
+#endif // !__BINDIFF_HHP__

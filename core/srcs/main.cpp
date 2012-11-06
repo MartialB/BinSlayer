@@ -33,27 +33,32 @@ int main(int argc, char *argv[])
   // Create a instance of the CG_Core object
   BinSlay::CG_Core *cg_core = core.createCG_Core(argv[1], argv[2]);
 
-  // Configuration of the Buindiff algorithm
-  cg_core->add_Property(0);
-  cg_core->add_Property(1);
-  //  cg_core->add_Selector(0); // name
-  cg_core->add_Selector(1); // opcode
-  cg_core->add_Selector(2); // bindiff
-  // Run Bindiff algorithm
-  cg_core->run_bindiff_algorithm(1);
+  // ////////////////////////////////////////////////////////////
+  // // BinDiff Algorithm
 
-  // Re-Run it until no more isormorphism are found
-  unsigned int ret = 1;
-  while ((ret = cg_core->re_run_bindiff()));
+  // // 1- Configuration of the Buindiff algorithm
+  // cg_core->add_Property(BinSlay::idProperties::UP);
+  // cg_core->add_Property(BinSlay::idProperties::DOWN);
+  // 	//  cg_core->add_Selector(BinSlay::idSelectors::NAME);
+  // cg_core->add_Selector(BinSlay::idSelectors::CRC32);
+  // cg_core->add_Selector(BinSlay::idSelectors::CFG);
+  // // 2- Run Bindiff algorithm
+  // //  cg_core->run_bindiff_algorithm(BinSlay::DiffingLevel::FUNCTION);
+  // cg_core->run_bindiff_algorithm(BinSlay::DiffingLevel::CALL_GRAPH);
+  // 	// Re-Run it until no more isormorphism are found
+  // unsigned int ret = 1;
+  // while ((ret = cg_core->re_run_bindiff()));
 
-  // Print some information
-  std::cout << "NB_ISO: " << std::dec << cg_core->get_nb_isomorphism_found()
-  	    << " - NB_LEFT:" << cg_core->get_graph_left().getnbNode()
-  	    << " - NB_RIGHT:" << cg_core->get_graph_right().getnbNode()
-  	    << std::endl;
+  // // Print some information
+  // std::cout << "NB_ISO: " << std::dec << cg_core->get_nb_isomorphism_found()
+  // 	    << " - NB_NODE_LEFT:" << cg_core->get_graph_left().getnbNode()
+  // 	    << " - NB_NODE_RIGHT:" << cg_core->get_graph_right().getnbNode()
+  // 	    << std::endl;
 
+  ////////////////////////////////////////////////////////////
   // Ged Computation
-  cg_core->compute_ged(0);
+  cg_core->compute_ged(BinSlay::gedProperties::WITH_VALIDATOR);
+	//  cg_core->compute_ged(BinSlay::gedProperties::NO_OPTIONS);
   std::cout << "Ged: " << cg_core->get_ged() << std::endl;
 
   // We want to count the number of isomorphisms found which have correctly matched
