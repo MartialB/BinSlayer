@@ -31,11 +31,11 @@ BinSlay::ReverseAPI::CFG_Builder::operator()(
   _cfg[this->_idx_block] =
     new BinSlay::ReverseAPI::BasicBlockBVertex(
 		this->_idx_block,
-		nb_jump_from_entry,
-		nb_jump_to_exit,
-		nb_outgoing_calls,
-		block.sources().size(),
-		block.targets().size(),
+		nb_jump_from_entry, // Ok !
+		nb_jump_to_exit, // Ok !
+		nb_outgoing_calls, // Ok !
+		block.sources().size(), // Bad !
+		block.targets().size(), // Bad !
 		_bin.get_basic_block_nbInstrs(block.start()),
 		_bin.get_basic_block_crc32(block.start()),
 		block.start()

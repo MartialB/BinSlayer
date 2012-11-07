@@ -33,6 +33,8 @@ namespace BinSlay
     virtual bool run_bindiff_algorithm(BinSlay::DiffingLevel level);
     virtual bool compute_ged(BinSlay::gedProperties::gedProperties_e options);
 
+    double run_bindiff_at_cfg_level(unsigned long addr_left, unsigned long addr_right);
+
   private:
     void _run_bindiff_at_cfg_level();
   };

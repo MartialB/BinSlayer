@@ -8,6 +8,7 @@
 #ifndef GRAPHED_HH_
 # define GRAPHED_HH_
 
+# include <iomanip>
 # include <stdlib.h>
 # include "BinSlay.hpp"
 # include "Node.hh"
@@ -143,11 +144,90 @@ namespace BinSlay
 	}
 	++row;
       }
-    }
 
+  // for (unsigned int i = 0; i < _cost_matrix_size; i++)
+  //   {
+  //     for (unsigned int j = 0; j < _cost_matrix_size; j++)
+  // 	{
+  // 	  if (this->_matrix[i* _cost_matrix_size +j]._cost < 4000000)
+  // 	    std::cout << std::dec << std::setw(4) << std::right << std::setfill(' ')
+  // 		      << this->_matrix[i* _cost_matrix_size +j]._cost;
+  // 	  else
+  // 	    std::cout << std::setw(4) << std::right << std::setfill(' ') << "inf";	    
+  // 	  if (this->_matrix[i* _cost_matrix_size +j]._starred)
+  // 	    std::cout << std::setw(0) << std::internal << "*";
+  // 	  if (this->_matrix[i* _cost_matrix_size +j]._primed)
+  // 	    std::cout << std::setw(0) << std::internal << "'";
+  // 	  std::cout << "   ";
+  // 	}
+  //     std::cout << std::endl;
+  //   }
+
+    }
+    
     void update_cost(unsigned int cost, unsigned int row, unsigned int col)
     {
       this->_matrix[row * _cost_matrix_size + col]._cost += cost;
+    }
+
+    void reduce_deletion_cost(unsigned int cost, unsigned int row, unsigned int col)
+    {
+      size_t idx = row * _cost_matrix_size + (_osize_g2 + row);
+      unsigned int number = 10;
+      // if (cost >= 2000)
+      // 	number = 10;
+      // else if (cost >= 1000)
+      // 	number = 8;
+      // else if (cost >= 500)
+      // 	number = 5;
+      // else if (cost >= 250)
+      // 	number = 3;
+      // else if (cost >= 100)
+      // 	number = 2;
+      // else if (cost >= 50)
+      // 	number = 1;
+      // else
+      // 	number = 0;
+
+      // std::cout << std::dec << "DELETION -> old cost: " << this->_matrix[idx]._cost
+      // 		<< " - row: " << row << " - col: " << col << " - ";
+      if (this->_matrix[idx]._cost <= number) {
+	this->_matrix[idx]._cost = 0;
+      } else {
+	this->_matrix[idx]._cost -= number;
+      }
+      // if (cost >= 2000)
+      // 	this->_matrix[idx]._cost = 0;
+      //      std::cout << std::dec << "new cost: " << this->_matrix[idx]._cost << std::endl;
+    }
+
+    void reduce_insertion_cost(unsigned int cost, unsigned int row, unsigned int col)
+    {
+      size_t idx = (_osize_g1 + col) * _cost_matrix_size + col;
+      unsigned int number = 10;
+      // if (cost >= 2000)
+      // 	number = 10;
+      // else if (cost >= 1000)
+      // 	number = 8;
+      // else if (cost >= 500)
+      // 	number = 5;
+      // else if (cost >= 250)
+      // 	number = 3;
+      // else if (cost >= 100)
+      // 	number = 2;
+      // else if (cost >= 50)
+      // 	number = 1;
+      // else
+      // 	number = 0;
+
+      // std::cout << std::dec << "INSERTION -> old cost: " << this->_matrix[idx]._cost
+      // 		<< " - row: " << row << " - col: " << col << " - ";
+      if (this->_matrix[idx]._cost <= number) {
+	this->_matrix[idx]._cost = 0;
+      } else {
+	this->_matrix[idx]._cost -= number;
+      }
+      //      std::cout << std::dec << "new cost: " << this->_matrix[idx]._cost << std::endl;
     }
 
     void setEditPath(typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST *ep)
@@ -214,7 +294,7 @@ namespace BinSlay
     
     GED getGED()
     {
-      // Check if you have already computed the GED and if not, compute it
+      // Check if we have already computed the GED and if not, compute it
       if (this->_ged == 0xffffffff)
 	this->compute();
       return this->_ged;

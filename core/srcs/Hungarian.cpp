@@ -638,6 +638,8 @@ inline bool BinSlay::Hungarian::_is_all_columns_covered() const
 //     }
 // }
 
+#include <iomanip>
+
 void BinSlay::Hungarian::display() const
 {
   for (unsigned int i = 0; i < _cost_matrix_size; i++)
@@ -645,15 +647,15 @@ void BinSlay::Hungarian::display() const
       for (unsigned int j = 0; j < _cost_matrix_size; j++)
 	{
 	  if (this->m[i* _cost_matrix_size +j]._cost < 4000000)
-	    std::cout << std::dec << std::setw(4) << std::setfill(' ')
+	    std::cout << std::dec << std::setw(4) << std::right << std::setfill(' ')
 		      << this->m[i* _cost_matrix_size +j]._cost;
 	  else
-	    std::cout << "inf";	    
+	    std::cout << std::setw(4) << std::right << std::setfill(' ') << "inf";	    
 	  if (this->m[i* _cost_matrix_size +j]._starred)
-	    std::cout << "*";
+	    std::cout << std::setw(0) << std::internal << "*";
 	  if (this->m[i* _cost_matrix_size +j]._primed)
-	    std::cout << "'";
-	  std::cout << "  ";
+	    std::cout << std::setw(0) << std::internal << "'";
+	  std::cout << "   ";
 	}
       std::cout << std::endl;
     }

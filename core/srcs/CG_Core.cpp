@@ -113,7 +113,7 @@ BinSlay::CG_Core::compute_ged(
     cfg_selectors[BinSlay::idSelectors::NAME] = nullptr;
     cfg_properties[BinSlay::idProperties::UP] = new BinSlay::UpProperty<BinSlay::BbNode>;
     cfg_properties[BinSlay::idProperties::DOWN] = new BinSlay::DownProperty<BinSlay::BbNode>;
-    cfg_selectors[BinSlay::idSelectors::CFG] = new BinSlay::BindiffSelector<BinSlay::BbNode>;
+    //cfg_selectors[BinSlay::idSelectors::CFG] = new BinSlay::BindiffSelector<BinSlay::BbNode>;
     cfg_selectors[BinSlay::idSelectors::CRC32] = new BinSlay::Crc32Selector<BinSlay::BbNode>;
 
     // Set the initial threshold
@@ -194,6 +194,12 @@ BinSlay::CG_Core::compute_ged(
 	  
 	//	  std::cout << "before deleting/inserting...." << std::endl;
 	if (((double)cfg_nb_isomorphims / (double)max * 100.0) <= threshold) {
+
+
+	  // We also want make the deletion+insertion or insertion+deletion possible
+	  // so we should decrease the cost to insert/delete while increasing the cost
+	  // of substituting this two functions
+
 	  // Then we add node left and right to their new unmatched lists respectively
 	  tmp_u1->push_back((*it_iso)->getLeft());
 	  tmp_u2->push_back((*it_iso)->getRight());
@@ -264,6 +270,8 @@ BinSlay::CG_Core::compute_ged(
       // Update costs
       for (auto it = cost_to_update.begin(); it != cost_to_update.end(); ++it) {
 	tmp_ged->update_cost(it->second, it->first.first, it->first.second);
+	//	tmp_ged->reduce_deletion_cost(it->second, it->first.first, it->first.second);
+	//tmp_ged->reduce_insertion_cost(it->second, it->first.first, it->first.second);
       }
       // Re-compute GED with tmp_u1 and tmp_u2 and get the resulting edit path
       tmp_ged->compute();
@@ -338,97 +346,143 @@ void BinSlay::CG_Core::_run_bindiff_at_cfg_level()
   cfg_selectors[BinSlay::idSelectors::NAME] = nullptr;
   cfg_properties[BinSlay::idProperties::UP] = new BinSlay::UpProperty<BinSlay::BbNode>;
   cfg_properties[BinSlay::idProperties::DOWN] = new BinSlay::DownProperty<BinSlay::BbNode>;
-  cfg_selectors[BinSlay::idSelectors::CFG] = new BinSlay::BindiffSelector<BinSlay::BbNode>;
+  //cfg_selectors[BinSlay::idSelectors::CFG] = new BinSlay::BindiffSelector<BinSlay::BbNode>;
   cfg_selectors[BinSlay::idSelectors::CRC32] = new BinSlay::Crc32Selector<BinSlay::BbNode>;
 
-  for (typename BinSlay::bind_node<BinSlay::FctNode>::MAPPING::const_iterator it_map =
-	 _mapping->begin(); it_map != _mapping->end(); ++it_map)
-    {
-      for (typename BinSlay::bind_node<BinSlay::FctNode>::ISOMORPHES_LIST::iterator it_iso =
-	     (*it_map)->begin(); it_iso != (*it_map)->end();/* no incrementation here */)
-	{
-	  // Create the CFG objects
-	  BinSlay::CFG *cfg_left =
-	    new BinSlay::CFG(&_bin_left, (*it_iso)->getLeft()->getAddr());
-	  BinSlay::CFG *cfg_right =
-	    new BinSlay::CFG(&_bin_right, (*it_iso)->getRight()->getAddr());
+  for (auto it_map = _mapping->begin(); it_map != _mapping->end(); ++it_map) {
+    for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end();/* no incrementation here */) {
+      // Create the CFG objects
+      BinSlay::CFG *cfg_left =
+	new BinSlay::CFG(&_bin_left, (*it_iso)->getLeft()->getAddr());
+      BinSlay::CFG *cfg_right =
+	new BinSlay::CFG(&_bin_right, (*it_iso)->getRight()->getAddr());
 
-	  // Create the list of nodes for each graph
-	  typename BinSlay::bind_node<BinSlay::BbNode>::NODES_LIST *cfg_l_left =
-	    cfg_left->CreateListOfNodes();
-	  typename BinSlay::bind_node<BinSlay::BbNode>::NODES_LIST *cfg_l_right =
-	    cfg_right->CreateListOfNodes();
+      // Create the list of nodes for each graph
+      auto *cfg_l_left = cfg_left->CreateListOfNodes();
+      auto *cfg_l_right = cfg_right->CreateListOfNodes();
 
-	  // Create an instance of the Bindiff object
-	  BinSlay::Bindiff<BinSlay::BbNode> *cfg_bindiff =
-	    new BinSlay::Bindiff<BinSlay::BbNode>(*cfg_l_left, *cfg_l_right,
-						  cfg_selectors, cfg_properties);
+      // Create an instance of the Bindiff object
+      BinSlay::Bindiff<BinSlay::BbNode> *cfg_bindiff =
+	new BinSlay::Bindiff<BinSlay::BbNode>(*cfg_l_left, *cfg_l_right,
+	       	       	  cfg_selectors, cfg_properties);
 
-	  // Call the run method and retrieve the MAPPING
-	  typename BinSlay::bind_node<BinSlay::BbNode>::MAPPING *cfg_mapping = cfg_bindiff->run();
+      // Call the run method and retrieve the MAPPING
+      auto *cfg_mapping = cfg_bindiff->run();
 
-	  // Get the number of isomorphims found
-	  double cfg_nb_isomorphims = 0;
-	  for (typename BinSlay::bind_node<BinSlay::BbNode>::MAPPING::const_iterator it_map_cfg =
-		 cfg_mapping->begin(); it_map_cfg != cfg_mapping->end(); ++it_map_cfg)
-	    for (typename BinSlay::bind_node<BinSlay::BbNode>::ISOMORPHES_LIST::const_iterator it_iso =
-		   (*it_map_cfg)->begin(); it_iso != (*it_map_cfg)->end(); ++it_iso)
-	      ++cfg_nb_isomorphims;
+      // Get the number of isomorphims found
+      double cfg_nb_isomorphims = 0;
+      for (typename BinSlay::bind_node<BinSlay::BbNode>::MAPPING::const_iterator it_map_cfg =
+	     cfg_mapping->begin(); it_map_cfg != cfg_mapping->end(); ++it_map_cfg)
+	for (typename BinSlay::bind_node<BinSlay::BbNode>::ISOMORPHES_LIST::const_iterator it_iso =
+	       (*it_map_cfg)->begin(); it_iso != (*it_map_cfg)->end(); ++it_iso)
+	  ++cfg_nb_isomorphims;
 
-	  // Clean the cfg_mapping
-	  for (typename BinSlay::bind_node<BinSlay::BbNode>::MAPPING::const_iterator it_map_cfg =
-		 cfg_mapping->begin(); it_map_cfg != cfg_mapping->end(); ++it_map_cfg)
-	    {
-	      for (typename BinSlay::bind_node<BinSlay::BbNode>::ISOMORPHES_LIST::const_iterator
-		     it_iso = (*it_map_cfg)->begin(); it_iso != (*it_map_cfg)->end(); ++it_iso)
-  		    delete *it_iso;
-  		  delete *it_map_cfg;
-  		}
+      // Clean the cfg_mapping
+      for (auto it_map_cfg = cfg_mapping->begin(); it_map_cfg != cfg_mapping->end(); ++it_map_cfg) {
+	for (auto it_iso = (*it_map_cfg)->begin(); it_iso != (*it_map_cfg)->end(); ++it_iso)
+	  delete *it_iso;
+	delete *it_map_cfg;
+      }
 
-	  // Two cfg are identical if they have the same number of nodes and if
-	  // all their nodes are isomorphic.
-	  if (!(cfg_left->getnbNode() + cfg_right->getnbNode() ==
-		cfg_nb_isomorphims * 2))
-	    {
-	      // if they are not, we remove this couple from the isoList because these
-	      // two functions are not isomorphic at the CFG level.
-	      delete *it_iso;
-	      it_iso = (*it_map)->erase(it_iso);
-	      // TODO: Need to remove them from the '_l_left' and '_l_right' lists too !
-	    }
-	  else
-	    {
-	      ++it_iso;
-	    }
-	  delete cfg_mapping;
-	  delete cfg_l_left;
-	  delete cfg_l_right;
-	  delete cfg_left;
-	  delete cfg_right;
-	  delete cfg_bindiff;
-	}
+      // Two cfg are identical if they have the same number of nodes and if
+      // all their nodes are isomorphic.
+      if (!(cfg_left->getnbNode() + cfg_right->getnbNode() ==
+	    cfg_nb_isomorphims * 2)) {
+	// if they are not, we remove this couple from the isoList because these
+	// two functions are not isomorphic at the CFG level.
+	delete *it_iso;
+	it_iso = (*it_map)->erase(it_iso);
+	// TODO: Need to remove them from the '_l_left' and '_l_right' lists too !
+      } else {
+	++it_iso;
+      }
+      delete cfg_mapping;
+      delete cfg_l_left;
+      delete cfg_l_right;
+      delete cfg_left;
+      delete cfg_right;
+      delete cfg_bindiff;
     }
+  }
 
   // Delete selectors
-  for (typename BinSlay::bind_node<BinSlay::BbNode>::SELECTORS::const_iterator it =
-	 cfg_selectors.begin(); it != cfg_selectors.end(); ++it)
+  for (auto it = cfg_selectors.begin(); it != cfg_selectors.end(); ++it)
     delete *it;
   
   // Delete properties
-  for (typename BinSlay::bind_node<BinSlay::BbNode>::PROPERTIES::const_iterator it =
-	 cfg_properties.begin(); it != cfg_properties.end(); ++it)
+  for (auto it = cfg_properties.begin(); it != cfg_properties.end(); ++it)
     delete *it;
 }
-
-// BinSlay::CG_Core& BinSlay::CG_Core::operator=(BinSlay::CG_Core const &o)
-// {
   
-// }
+double
+BinSlay::CG_Core::run_bindiff_at_cfg_level(
+	unsigned long addr_left,
+	unsigned long addr_right
+)
+{
+  typename BinSlay::bind_node<BinSlay::BbNode>::SELECTORS cfg_selectors;
+  typename BinSlay::bind_node<BinSlay::BbNode>::PROPERTIES cfg_properties;
+  cfg_selectors.resize(3);
+  cfg_properties.resize(2);
 
+  cfg_selectors[BinSlay::idSelectors::NAME] = nullptr;
+  cfg_properties[BinSlay::idProperties::UP] = new BinSlay::UpProperty<BinSlay::BbNode>;
+  cfg_properties[BinSlay::idProperties::DOWN] = new BinSlay::DownProperty<BinSlay::BbNode>;
+  cfg_selectors[BinSlay::idSelectors::CRC32] = new BinSlay::Crc32Selector<BinSlay::BbNode>;
 
+  // Create the CFG objects
+  BinSlay::CFG *cfg_left = new BinSlay::CFG(&_bin_left, addr_left);
+  BinSlay::CFG *cfg_right = new BinSlay::CFG(&_bin_right, addr_right);
 
+  // Create the list of nodes for each graph
+  auto *cfg_l_left = cfg_left->CreateListOfNodes();
+  auto *cfg_l_right = cfg_right->CreateListOfNodes();
 
+  // Create an instance of the Bindiff object
+  BinSlay::Bindiff<BinSlay::BbNode> *cfg_bindiff =
+    new BinSlay::Bindiff<BinSlay::BbNode>(*cfg_l_left, *cfg_l_right,
+		cfg_selectors, cfg_properties);
 
+  // Call the run method and retrieve the MAPPING
+  auto *cfg_mapping = cfg_bindiff->run();
+
+  // Get the number of isomorphims found
+  double cfg_nb_isomorphims = 0;
+  for (typename BinSlay::bind_node<BinSlay::BbNode>::MAPPING::const_iterator it_map_cfg =
+	 cfg_mapping->begin(); it_map_cfg != cfg_mapping->end(); ++it_map_cfg)
+    for (typename BinSlay::bind_node<BinSlay::BbNode>::ISOMORPHES_LIST::const_iterator it_iso =
+	   (*it_map_cfg)->begin(); it_iso != (*it_map_cfg)->end(); ++it_iso)
+      ++cfg_nb_isomorphims;
+
+  // Get the percentage of similarty between the two compared graphs
+  unsigned int max = cfg_left->getnbNode() <= cfg_right->getnbNode() ?
+    cfg_right->getnbNode() : cfg_left->getnbNode();
+  double res = (double)cfg_nb_isomorphims / (double)max * 100.0;
+
+  // Clean the cfg_mapping
+  for (auto it_map_cfg = cfg_mapping->begin(); it_map_cfg != cfg_mapping->end(); ++it_map_cfg) {
+    for (auto it_iso = (*it_map_cfg)->begin(); it_iso != (*it_map_cfg)->end(); ++it_iso)
+      delete *it_iso;
+    delete *it_map_cfg;
+  }
+
+  delete cfg_mapping;
+  delete cfg_l_left;
+  delete cfg_l_right;
+  delete cfg_left;
+  delete cfg_right;
+  delete cfg_bindiff;
+
+  // Delete selectors
+  for (auto it = cfg_selectors.begin(); it != cfg_selectors.end(); ++it)
+    delete *it;
+  
+  // Delete properties
+  for (auto it = cfg_properties.begin(); it != cfg_properties.end(); ++it)
+    delete *it;
+
+  return res;
+}
 
 
 

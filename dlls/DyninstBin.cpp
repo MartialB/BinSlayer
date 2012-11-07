@@ -194,12 +194,36 @@ BinSlay::ReverseAPI::DyninstBin::get_fct_nb_outcomming_calls(
   return nb_outcomming_calls;
 }
 
+using namespace Dyninst;
+using namespace SymtabAPI;
+
 /*
 **
 */
 BinSlay::ReverseAPI::CG *
 BinSlay::ReverseAPI::DyninstBin::recover_call_graph() const
 {
+  // TODO: clean this later and make it works with PE files
+  Symtab *obj = nullptr;
+
+  bool err = Symtab::openFile(obj, this->_file_name);
+  if (!err) {
+    abort();
+  }
+
+  Region *reg_got = nullptr;
+  Region *reg_plt = nullptr;
+
+  err = obj->findRegion(reg_got, ".got");
+  if (!err) {
+    abort();
+  }
+
+  err = obj->findRegion(reg_plt, ".plt");
+  if (!err) {
+    abort();
+  }
+
   // Create a Call-Graph data structure, used to communicate between the DynInst dll
   // and the BinSlayer core engine.
   BinSlay::ReverseAPI::CG *cg = new BinSlay::ReverseAPI::CG;
@@ -215,13 +239,23 @@ BinSlay::ReverseAPI::DyninstBin::recover_call_graph() const
   // Resize the Call-Graph data structure to the number of functions found
   cg->resize(this->_co->funcs().size());
 
+  std::cerr << std::hex << "plt: 0x" << reg_plt->getRegionAddr() << " - got: 0x"
+	    << reg_got->getRegionAddr() << std::endl;
+
   // For each function found...
   size_t nb_nodes = 0;
+  unsigned int dynamic_calls = 0;
   for (auto it_fct = this->_co->funcs().begin(); it_fct != this->_co->funcs().end(); ++it_fct) {
     Dyninst::ParseAPI::Function *f = *it_fct;
 
-    // Create a function node in the CG data structure
-    (*cg)[nb_nodes]= new BinSlay::ReverseAPI::FctVertex(
+    //    std::cerr << std::hex << "f addr: 0x" << f->entry()->start() << std::endl; 
+    if (reg_got->isOffsetInRegion(f->entry()->start()) ||
+    	reg_plt->isOffsetInRegion(f->entry()->start())) {
+      // We skip dynamic calls
+      ++dynamic_calls;
+    } else {
+      // Create a function node in the CG data structure
+      (*cg)[nb_nodes]= new BinSlay::ReverseAPI::FctVertex(
 		       	nb_nodes,
 			f->blocks().size(),
 			get_fct_nb_internals_edges(*f),
@@ -230,32 +264,36 @@ BinSlay::ReverseAPI::DyninstBin::recover_call_graph() const
 			f->entry()->start()
        		     );
 
-    for(auto it_block = f->blocks().begin(); it_block != f->blocks().end(); ++it_block) {
-      Dyninst::ParseAPI::Block *b = *it_block;
-      // Don’t revisit blocks in shared code
-      if (seen.find(b->start()) != seen.end())
-	continue;	  
-      seen[b->start()] = true;
+      for(auto it_block = f->blocks().begin(); it_block != f->blocks().end(); ++it_block) {
+	Dyninst::ParseAPI::Block *b = *it_block;
+	// Don’t revisit blocks in shared code
+	if (seen.find(b->start()) != seen.end())
+	  continue;	  
+	seen[b->start()] = true;
 
-      // For each edges which points out of the current block,
-      // check for function calls
-      for (auto it_edge = b->targets().begin(); it_edge != b->targets().end(); ++it_edge) {
-	// To recover the call graph, we are only interested in edges
-	// which type is Dyninst::ParseAPI::CALL
-	if ((*it_edge)->type() == Dyninst::ParseAPI::CALL) {
-	  // Fill the .dot file
-	  fs << "\t\t\"" << std::hex << f->entry()->start() << "\" -> \""
-	     << (*it_edge)->trg()->start() << "\"" << " [color=blue]" << std::endl;
-	  // Add link in our call graph data
-	  (*cg)[nb_nodes]->_link_to.push_front((*it_edge)->trg()->start());
+	// For each edges which points out of the current block,
+	// check for function calls
+	for (auto it_edge = b->targets().begin(); it_edge != b->targets().end(); ++it_edge) {
+	  // To recover the call graph, we are only interested in edges
+	  // which type is Dyninst::ParseAPI::CALL
+	  if ((*it_edge)->type() == Dyninst::ParseAPI::CALL) {
+	    // Fill the .dot file
+	    fs << "\t\t\"" << std::hex << f->entry()->start() << "\" -> \""
+	       << (*it_edge)->trg()->start() << "\"" << " [color=blue]" << std::endl;
+	    // Add link in our call graph data
+	    (*cg)[nb_nodes]->_link_to.push_front((*it_edge)->trg()->start());
+	  }
 	}
       }
+      // Increase the number of nodes (one node => one function)
+      ++nb_nodes;
     }
-    // Increase the number of nodes (one node => one function)
-    ++nb_nodes;
   }
   fs << "}" << std::endl;
   fs.close();
+  std::cerr << std::dec << "nb fct: " << cg->size() << std::endl;
+  std::cerr << std::dec << "nb dynamic calls: " << dynamic_calls << std::endl;
+  cg->resize(cg->size() - dynamic_calls);
   return cg;
 }
 
@@ -428,7 +466,8 @@ BinSlay::ReverseAPI::DyninstBin::get_function_crc32(Address addr) const
   }
 
   // Get the high address of this function
-  uintptr_t fend = reinterpret_cast<uintptr_t>(this->_sts->getPtrToInstruction((*last)->end()));
+  uintptr_t fend = fstart + ((*last)->end() - f.entry()->start());
+  //    reinterpret_cast<uintptr_t>(this->_sts->getPtrToInstruction((*last)->end()));
 
   if (fend) { // TODO: Why fend == 0 sometimes ???
     // Allocate and create a decoder
@@ -507,18 +546,16 @@ BinSlay::ReverseAPI::DyninstBin::get_basic_block_crc32(Address addr) const
 BinSlay::ReverseAPI::SymName
 BinSlay::ReverseAPI::DyninstBin::get_function_symname(Address addr) const
 {
-  // Retrieve a ptr on the desired 'Function' object
-  for (Dyninst::ParseAPI::CodeObject::funclist::iterator fit = this->_co->funcs().begin();
-       fit != this->_co->funcs().end(); ++fit)
-    {
-      if ((*fit)->entry()->start() == addr)
-	{
-	  if ((*fit)->name().substr(0, 4) != "targ")
-	    return (*fit)->name();
-	}
+  for (auto fit = this->_co->funcs().begin(); fit != this->_co->funcs().end(); ++fit) {
+    if ((*fit)->entry()->start() == addr) {
+      if ((*fit)->name().substr(0, 4) != "targ")
+	return (*fit)->name();
     }
+  }
   return "";
 }
+
+// TODO: We can factorize code here
 
 BinSlay::ReverseAPI::INSTR_LIST *
 BinSlay::ReverseAPI::DyninstBin::recover_basic_block_instr(
@@ -533,11 +570,13 @@ BinSlay::ReverseAPI::DyninstBin::recover_basic_block_instr(
   this->_co->cs()->findRegions(addr, regions);
   Dyninst::ParseAPI::Block *block = this->_co->findBlockByEntry(*regions.begin(), addr);
 
-  // We will now use BeaEngine disassembler to recovert the instructions because it is a little
-  // too complicated with DyninstAPI: it does TOO MUCH and moreover, I had some issues to fully
-  // recover instructions on my linux plateforme (e.g. register with [NAME_NOT_FOUND], while
-  // objdump has any problem. BeaEngine looks great and it is fully cross-plateform.
-  // Main structure of the beaengine
+  //
+  // We will now use BeaEngine disassembler to recovert the instructions because
+  // I had some issues to fully recover instructions on my linux plateform (e.g. register
+  // with [NAME_NOT_FOUND]), while objdump has any problem. BeaEngine looks great and it is
+  // fully cross-plateform.
+  //
+
   DISASM MyDisasm;
   int Error = 0;
   int len = 0;
@@ -547,11 +586,12 @@ BinSlay::ReverseAPI::DyninstBin::recover_basic_block_instr(
 
   // Set the start address of the disassembly
   uintptr_t bbStart = reinterpret_cast<uintptr_t>(this->_sts->getPtrToInstruction(block->start()));
-  uintptr_t bbEnd = reinterpret_cast<uintptr_t>(this->_sts->getPtrToInstruction(block->end()));
+  uintptr_t bbEnd = bbStart + (block->end() - block->start());
 
   MyDisasm.EIP = bbStart;
-  //  UInt64 EndCodeSection = (UInt64)bbEnd;
-  // std::cout << "Start: " << std::hex << MyDisasm.EIP << " - End:" << EndCodeSection << std::endl;
+#ifdef DEBUG
+  std::cerr << "Start: " << std::hex << MyDisasm.EIP << " - End:" << bbEnd << std::endl;
+#endif // !DEBUG
 
   // Disassembly loop
   while (!Error) {
@@ -566,7 +606,7 @@ BinSlay::ReverseAPI::DyninstBin::recover_basic_block_instr(
       std::stringstream raw;
       for (size_t i = 0; i < static_cast<size_t>(len); ++i) {
 	raw << std::hex << std::setw(2) << setfill('0')
-	    << (int)*(reinterpret_cast<unsigned char *>(bbStart)) << " ";
+	    << (int)*(reinterpret_cast<unsigned char *>(bbStart + i)) << " ";
       }
       // Add a 'Instr' object in the list
       instrs->push_back(new BinSlay::ReverseAPI::Instr(
@@ -593,40 +633,24 @@ BinSlay::ReverseAPI::DyninstBin::recover_function_instr(
 {
   // Data to be returned by this function
   BinSlay::ReverseAPI::INSTR_LIST *instrs = new BinSlay::ReverseAPI::INSTR_LIST;
-
-  Dyninst::ParseAPI::Function *f = nullptr;
-  Dyninst::ParseAPI::CodeObject::funclist &all = this->_co->funcs();
-  Dyninst::ParseAPI::CodeObject::funclist::iterator fit = all.begin();
-
   // Retrieve a ptr on the desired 'Function' object
-  for (; fit != all.end(); ++fit) {
-    if ((*fit)->entry()->start() == addr) {
-      f = *fit;
-      break;
-    }
-  }
-
-  // "The blocks are guaranteed to be sorted by starting address"
+  Dyninst::ParseAPI::Function &f = *this->get_fct_by_addr(addr);
+  // "The blocks are guaranteed to be sorted by starting address":
   // Get the low address of this function
-  unsigned char *fstart = (unsigned char *)(this->_sts->getPtrToInstruction(f->entry()->start()));
-
+  uintptr_t fstart = reinterpret_cast<uintptr_t>(this->_sts->getPtrToInstruction(f.entry()->start()));
   // Get the last block
   Dyninst::ParseAPI::Function::blocklist::iterator last;
-  for(Dyninst::ParseAPI::Function::blocklist::iterator it_block = f->blocks().begin();
-      it_block != f->blocks().end(); ++it_block)
-    {
-      // TODO: Cmp the addr and return the high
-      last = it_block;
-    }
-
+  for(auto it_block = f.blocks().begin(); it_block != f.blocks().end(); ++it_block) {
+    last = it_block;
+  }
   // Get the high address of this function
-  unsigned char *fend = (unsigned char *)(this->_sts->getPtrToInstruction((*last)->end()));
+  uintptr_t fend = fstart + ((*last)->end() - f.entry()->start());
 
   //
-  // We will now use BeaEngine disassembler to recovert the instructions because it is a little
-  // too complicated with DyninstAPI: it does TOO MUCH and moreover, I had some issues to fully
-  // recover instructions on my linux plateforme (e.g. register with [NAME_NOT_FOUND], while
-  // objdump has any problem. BeaEngine looks great and it is fully cross-plateform.
+  // We will now use BeaEngine disassembler to recovert the instructions because
+  // I had some issues to fully recover instructions on my linux plateform (e.g. register
+  // with [NAME_NOT_FOUND]), while objdump has any problem. BeaEngine looks great and it is
+  // fully cross-plateform.
   //
 
   // Main structure of the beaengine
@@ -638,8 +662,8 @@ BinSlay::ReverseAPI::DyninstBin::recover_function_instr(
   (void)memset(&MyDisasm, 0, sizeof(DISASM));
 
   // Set the start address of the disassembly
-  MyDisasm.EIP = (UIntPtr)fstart;
-  UInt64 EndCodeSection = (UInt64)fend;
+  MyDisasm.EIP = fstart;
+  UInt64 EndCodeSection = fend;
 
   // Disassembly loop
   while (!Error){
@@ -647,38 +671,32 @@ BinSlay::ReverseAPI::DyninstBin::recover_function_instr(
     MyDisasm.SecurityBlock = (UIntPtr)EndCodeSection - (UIntPtr)MyDisasm.EIP;
  
     len = Disasm(&MyDisasm);
-    if (len == OUT_OF_BLOCK)
-      {
-	Error = 1;
-      }
-    else if (len == UNKNOWN_OPCODE)
-      {
-	Error = 1;
-      }
-    else
-      {
-	// raw bytes of the instruction
-	std::stringstream raw;
-	for (int i = 0; i < len; i++)
-	  raw << std::hex << std::setw(2) << setfill('0')
-	      << (int)(fstart[i]) << " ";
+    if (len == OUT_OF_BLOCK) {
+      Error = 1;
+    } else if (len == UNKNOWN_OPCODE) {
+      Error = 1;
+    } else {
+      // raw bytes of the instruction
+      std::stringstream raw;
+      for (int i = 0; i < len; i++)
+	raw << std::hex << std::setw(2) << setfill('0')
+	    << (int)*(reinterpret_cast<unsigned char *>(fstart + i)) << " ";
 	
-	// Add a 'Instr' object in the list
-	instrs->push_back(new BinSlay::ReverseAPI::Instr(
+      // Add a 'Instr' object in the list
+      instrs->push_back(new BinSlay::ReverseAPI::Instr(
 				    addr,
 				    raw.str(),
 				    std::string(MyDisasm.CompleteInstr)
 			 ));
 	
-	MyDisasm.EIP = MyDisasm.EIP + (UIntPtr)len;
-	if (MyDisasm.EIP >= (unsigned long)fend)
-	  {
-	    Error = 1;
-	  }
-	// Do not forget to update the fstart and addr value
-	fstart += len;
-	addr += len;
+      MyDisasm.EIP = MyDisasm.EIP + (UIntPtr)len;
+      if (MyDisasm.EIP >= fend) {
+	Error = 1;
       }
+      // Do not forget to update the fstart and addr value
+      fstart += len;
+      addr += len;
+    }
   }
   return instrs;
 }

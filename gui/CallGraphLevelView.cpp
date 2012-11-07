@@ -884,6 +884,19 @@ void BinSlay::Gui::CallGraphLevelView::compute_ged()
   typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST *edit_path = _core->get_edit_path();
   // std::cout << "nb elem in edit path list: " << edit_path->size() << std::endl;
 
+  unsigned int matched = 0;
+  for (auto it_iso = edit_path->begin(); it_iso != edit_path->end(); ++it_iso) {
+    if ((*it_iso)->getLeft() && (*it_iso)->getRight()) {
+      if ((*it_iso)->getLeft()->getName() == (*it_iso)->getRight()->getName()) {
+	++matched;
+	std::cout << (*it_iso)->getLeft()->getName()  << " - "
+		  << (*it_iso)->getRight()->getName()  << std::endl;
+      }
+    }
+  }
+  std::cout << std::dec << "Number of matched functions: " << matched << std::endl;
+
+
   // std::cout << "Start displaying edit path..." << std::endl;
   // Show edit path
   int row = 0;
