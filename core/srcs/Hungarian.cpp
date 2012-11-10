@@ -7,6 +7,7 @@
 
 #include <iomanip>
 #include <stdlib.h>
+#include <list>
 #include "Hungarian.hh"
 
 BinSlay::Hungarian::Hungarian(BinSlay::Hungarian::Cost *m, unsigned int m_size,
@@ -23,12 +24,14 @@ BinSlay::Hungarian::Hungarian(BinSlay::Hungarian::Cost *m, unsigned int m_size,
   _state_row = (bool*)malloc(sizeof(bool) * _cost_matrix_size);
   _state_col = (bool*)malloc(sizeof(bool) * _cost_matrix_size);
   _starred_col = (unsigned int*)malloc(sizeof(unsigned int) * _cost_matrix_size);
+  _primed_col = (unsigned int*)malloc(sizeof(unsigned int) * _cost_matrix_size);
 
   for (unsigned int i = 0; i < _cost_matrix_size; ++i)
     {
       _state_row[i] = false;
       _state_col[i] = false;
       _starred_col[i] = 0;
+      _primed_col[i] = 0;
     }
 
   this->_search_uncovered_zeros_by_col = search_uncovered_zeros_by_col;
@@ -67,6 +70,7 @@ BinSlay::Hungarian::~Hungarian()
   free(_state_row);
   free(_state_col);
   free(_starred_col);
+  free(_primed_col);
 }
 
 /**
@@ -140,113 +144,79 @@ void BinSlay::Hungarian::_step0(int &step)
   // STEP0: Rows reduction + Columns reduction + starred zero
   //
 
-  //  std::cout << "_cost_matrix_size = " << _cost_matrix_size << std::endl;
-
-  // Rows reduction
-  for (unsigned int row = 0; row < _cost_matrix_size; ++row)
+  // For each row of the cost matrix, find the smallest element and substract
+  // it from every element in tis row.Rows reduction
+  for (size_t row = 0; row < _cost_matrix_size; ++row)
     {
       unsigned int min = -1;
-      for (unsigned int col = 0; col < _cost_matrix_size; ++col)
+      for (size_t col = 0; col < _cost_matrix_size; ++col)
 	min = m[row * _cost_matrix_size + col]._cost < min ?
 	  m[row * _cost_matrix_size + col]._cost : min;
-      for (unsigned int col = 0; col < _cost_matrix_size; ++col)
+      for (size_t col = 0; col < _cost_matrix_size; ++col)
 	m[row * _cost_matrix_size + col]._cost -= min;
     }
 
-  // std::cout << std::endl;
-  // this->display();
-  // std::cout << std::endl;
-
   // Columns reduction
-  for (unsigned int col = 0; col < this->_cost_matrix_size; col++)
+  for (size_t col = 0; col < this->_cost_matrix_size; col++)
     {
       unsigned int min = -1;
-      for (unsigned int row = 0; row < this->_cost_matrix_size; row++)
+      for (size_t row = 0; row < this->_cost_matrix_size; row++)
   	min = this->m[row * _cost_matrix_size + col]._cost < min ?
 	  this->m[row * _cost_matrix_size + col]._cost : min;
-      for (unsigned int row = 0; row < this->_cost_matrix_size; row++)
+      for (size_t row = 0; row < this->_cost_matrix_size; row++)
   	this->m[row * _cost_matrix_size + col]._cost -= min;
     }
 
-  // std::cout << std::endl;
-  // this->display();
-  // std::cout << std::endl;
-
   // Starred zero
-  for (unsigned int row = 0; row < this->_cost_matrix_size; row++)
-    for (unsigned int col = 0; col < this->_cost_matrix_size; col++)
-      {
-	if (!this->m[row * _cost_matrix_size + col]._cost)
-	  {
-	    // Check if there is a starred zero in its cols
-	    for (unsigned int r = 0; r < this->_cost_matrix_size; r++)
-	      if (!this->m[r * _cost_matrix_size + col]._cost &&
-		  this->m[r * _cost_matrix_size + col]._starred)
-		goto check_next_zero;
+  for (size_t row = 0; row < this->_cost_matrix_size; row++)
+    for (size_t col = 0; col < this->_cost_matrix_size; col++) {
+      if (!this->m[row * _cost_matrix_size + col]._cost)
+	{
+	  // Check if there is a starred zero in its cols
+	  for (unsigned int r = 0; r < this->_cost_matrix_size; r++)
+	    if (!this->m[r * _cost_matrix_size + col]._cost &&
+		this->m[r * _cost_matrix_size + col]._starred)
+	      goto check_next_zero;
+	  
+	  // Check if there is a starred zero in its rows
+	  for (unsigned int c = 0; c < this->_cost_matrix_size; c++)
+	    if (!this->m[row * _cost_matrix_size + c]._cost &&
+		this->m[row * _cost_matrix_size + c]._starred)
+	      goto check_next_zero;
 
-	    // Check if there is a starred zero in its rows
-	    for (unsigned int c = 0; c < this->_cost_matrix_size; c++)
-	      if (!this->m[row * _cost_matrix_size + c]._cost &&
-		  this->m[row * _cost_matrix_size + c]._starred)
-		goto check_next_zero;
-
-	    // Starred it if this zero is unique in its row and col
-	    this->m[row * _cost_matrix_size + col]._starred = true;
-	    ++_starred_col[col]; // __starred_col__cached
-	  }
-      check_next_zero:
-	;
-      }
-  // std::cout << std::endl;
-  // this->display();
-  // std::cout << std::endl;
-  //std::cout << "End of step0!" << std::endl;
+	  // Starred it if this zero is unique in its row and col
+	  this->m[row * _cost_matrix_size + col]._starred = true;
+	  ++_starred_col[col]; // __starred_col__cached
+	}
+    check_next_zero:
+      ;
+    }
   step = 1;
 }
 
 void BinSlay::Hungarian::_step1(int &step)
 {
-  // std::cout << "BEFORE STEP1:" << std::endl;
-  // std::cout << std::endl;
-  // this->display();
-  // std::cout << std::endl;
-  //  sleep(1);
-
   // Cover all columns if they contain a starred zero
-  for (unsigned int col = 0; col < this->_cost_matrix_size; ++col)
-    {
-      if (_starred_col[col]) // __starred_col__cached
-    	{
-    	  _state_col[col] = true;
-    	}
+  for (size_t col = 0; col < this->_cost_matrix_size; ++col) {
+    // If a column contains one or more primed zeros, erase them 
+    if (_primed_col[col]) {
+      for (size_t row = 0; row < this->_cost_matrix_size; ++row)
+	this->m[row * _cost_matrix_size + col]._primed = false;
+      _primed_col[col] = 0;
     }
-    // for (unsigned int row = 0; row < this->_cost_matrix_size; ++row)
-    //   {
-    // 	// // Optimization: erase the prime zero here instead at the end of the
-    // 	// // step 3
-    // 	// if (this->m[row * _cost_matrix_size + col]._primed)
-    // 	//   this->m[row * _cost_matrix_size + col]._primed = false;	
 
-    // 	// Check if their is a starred zero in the current case
-    // 	if (!this->m[row * _cost_matrix_size + col]._cost &&
-    // 	    this->m[row * _cost_matrix_size + col]._starred)
-    // 	  {
-    // 	    std::cout << _starred_col[col] << std::endl;
-    // 	    // Covered all the cases in the current column
-    // 	    _state_col[col] = true;
-    // 	    //this->cover_col(col);
-    // 	    // Skip this column because it is already fully covered
-	    
-    // 	    break; //No we can't do this anymore now because we have to erase the prime zero !!!
-    // 	  }
-    //   }
+    if (_starred_col[col]) // __starred_col__cached
+      {
+	// Cover it
+	_state_col[col] = true;
+      }
+  }
 
   // Check if all columns are covered and if not go to the step2
-  if (!_is_all_columns_covered())
-    {
-      step = 2;
-      return ;
-    }
+  if (!_is_all_columns_covered()) {
+    step = 2;
+    return ;
+  }
 
   // If yes, end of the algorithm, optimal solution found
   step = 5;
@@ -254,12 +224,6 @@ void BinSlay::Hungarian::_step1(int &step)
 
 void BinSlay::Hungarian::_step2(int &step)
 {
-  // std::cout << "BEFORE STEP2:" << std::endl;
-  // std::cout << std::endl;
-  // this->display();
-  // std::cout << std::endl;
-  //  sleep(1);
-
   // For all uncovered zeros
   bool isFinished = false;
 
@@ -268,51 +232,41 @@ void BinSlay::Hungarian::_step2(int &step)
       unsigned int r, c, starred_zero_in_col = 0;
 
       // Find an uncovered zero
-      if (!_find_uncovered_zero(r, c))
-	{
-	  // If not found, exit this loop and go to step4
-	  isFinished = true;
-	  break;
-	}
+      if (!_find_uncovered_zero(r, c)) {
+	// If not found, exit this loop and go to step4
+	isFinished = true;
+	break;
+      }
 
       // Prime it
       this->m[r * _cost_matrix_size + c]._primed = true;
+      ++_primed_col[c];
       
       // If there is no starred zero in the row containing this primed zero,
       // go to step3
-      if (!_is_starred_zero_in_row(r, starred_zero_in_col))
-	{
-	  // _last_visited = 0;
-	  // _recently_uncovered = 0;
-	  step = 3;
-	  this->_z0_row = r;
-	  this->_z0_col = c;
-	  return ;
-	}
+      if (!_is_starred_zero_in_row(r, starred_zero_in_col)) {
+	// _last_visited = 0;
+	// _recently_uncovered = 0;
+	step = 3;
+	this->_z0_row = r;
+	this->_z0_col = c;
+	return ;
+      }
       
       // Else cover the current row of the primed zero and uncover the
       // column containing the starred zero
-      //this->cover_row(r);
       _state_row[r] = true;
+
       _state_col[starred_zero_in_col] = false;
       _recently_uncovered = starred_zero_in_col;  // __uncovered__
-      // this->uncover_col(starred_zero_in_col);
     }
   
   // If the cost matrix does not contain any uncovered zero, go to step4
-  // _last_visited = 0;
-  // _recently_uncovered = 0;
   step = 4;
 }
 
 void BinSlay::Hungarian::_step3(int &step)
 {
-  // std::cout << "BEFORE STEP3:" << std::endl;
-  // std::cout << std::endl;
-  // this->display();
-  // std::cout << std::endl;
-  //sleep(1);
-
   bool isFinished = false;
   // unsigned int idx = 0;
 
@@ -321,7 +275,10 @@ void BinSlay::Hungarian::_step3(int &step)
   // the starred zero in the column of Z0 (if any). Let Z2 denote the primed zero
   // in the row of Z1 (there will always be one). Continue until the series
   // terminates at a primed zero that has no starred zero in its column.
-  this->m[this->_z0_row * _cost_matrix_size + this->_z0_col]._series = true;
+  std::list<std::pair<size_t, size_t> >	series;
+  series.push_front(std::make_pair(this->_z0_row, this->_z0_col));
+
+  //  this->m[this->_z0_row * _cost_matrix_size + this->_z0_col]._series = true;
   while(!isFinished)
     {
       unsigned int row_of_starred_zero = 0;
@@ -329,18 +286,20 @@ void BinSlay::Hungarian::_step3(int &step)
       bool is_starred_zero_in_col = false;
       bool is_primed_zero_in_row = false;
 
+      // Find a starred zero in the column if any
       is_starred_zero_in_col = _find_starred_zero_in_col(_z0_col, row_of_starred_zero);
-      if (is_starred_zero_in_col && !m[row_of_starred_zero * _cost_matrix_size + _z0_col]._series)
+      
+      if (is_starred_zero_in_col/* && !m[row_of_starred_zero * _cost_matrix_size + _z0_col]._series*/)
 	{
 	  // add the starred zero to the series
-	  this->m[row_of_starred_zero * _cost_matrix_size + _z0_col]._series = true;
+	  series.push_front(std::make_pair(row_of_starred_zero, this->_z0_col));
 
 	  // update row
 	  this->_z0_row = row_of_starred_zero;
 
 	  // add the primed zero to the series
 	  is_primed_zero_in_row = _find_primed_zero_in_row(row_of_starred_zero, col_of_primed_zero);
-	  this->m[row_of_starred_zero * _cost_matrix_size + col_of_primed_zero]._series = true;
+	  series.push_front(std::make_pair(row_of_starred_zero, col_of_primed_zero));
 
 	  // update col
 	  this->_z0_col = col_of_primed_zero;
@@ -355,37 +314,29 @@ void BinSlay::Hungarian::_step3(int &step)
   // Unstar each starred zero in the series and star each primed zero of the series
   // todo: keep col and row for each zero in the series to avoid looking at the whole
   // matrix one more time
-  unsigned int nb_elem = 0;
-  for (unsigned int row = 0; row < this->_cost_matrix_size; ++row)
-    {
-      for (unsigned int col = 0; col < this->_cost_matrix_size; ++col)
-	{
-	  if (this->m[row * _cost_matrix_size + col]._series)
-	    {
-	      if (this->m[row * _cost_matrix_size + col]._starred)
-		{
-		  this->m[row * _cost_matrix_size + col]._starred = false;
-		  if (_starred_col[col]) --_starred_col[col]; // __starred_col__cached
-		}
-	      if (this->m[row * _cost_matrix_size + col]._primed)
-		{
-		  this->m[row * _cost_matrix_size + col]._primed = false;
-		  this->m[row * _cost_matrix_size + col]._starred = true;
-		  ++_starred_col[col]; // __starred_col__cached
-		}
-	      this->m[row * _cost_matrix_size + col]._series = false;
-	      ++nb_elem;
-	    }
-	  if (this->m[row * _cost_matrix_size + col]._primed)
-	    this->m[row * _cost_matrix_size + col]._primed = false;	
 
-	}
-      // We can also to the reset of all covered row and columns to avoid
-      // useless looping
-      _state_row[row] = false;
-      _state_col[row] = false; // __uncovered__
-      _last_visited = 0;
+  for (auto it = series.begin(); it != series.end(); ++it) {
+
+    if (this->m[it->first * _cost_matrix_size + it->second]._starred) {
+      this->m[it->first * _cost_matrix_size + it->second]._starred = false;
+      if (_starred_col[it->second]) --_starred_col[it->second]; // __starred_col__cached
     }
+    if (this->m[it->first * _cost_matrix_size + it->second]._primed) {
+      this->m[it->first * _cost_matrix_size + it->second]._primed = false;
+      if (_primed_col[it->second]) --_primed_col[it->second];
+
+      this->m[it->first * _cost_matrix_size + it->second]._starred = true;
+      ++_starred_col[it->second]; // __starred_col__cached
+    }
+    this->m[it->first * _cost_matrix_size + it->second]._series = false;
+  }
+
+  for (size_t idx = 0; idx < _cost_matrix_size; ++idx) {
+    _state_row[idx] = false;
+    _state_col[idx] = false; // __uncovered__
+  }
+  _last_visited = 0;
+  // We report the erasing of primed zeros in step one
 
   // Go to step1
   step = 1;
@@ -410,6 +361,8 @@ void BinSlay::Hungarian::_step4(int &step)
 	    if (!this->m[row * _cost_matrix_size + col]._cost)
 	      {
 		this->m[row * _cost_matrix_size + col]._primed = false;
+		if (_primed_col[col]) --_primed_col[col];
+
 		if (this->m[row * _cost_matrix_size + col]._starred)
 		  {
 		    this->m[row * _cost_matrix_size + col]._starred = false;
@@ -445,47 +398,41 @@ bool BinSlay::Hungarian::_TEST(unsigned int &r, unsigned int &c)
 bool BinSlay::Hungarian::_find_uncovered_zero(unsigned int &r, unsigned int &c)
 {
   unsigned int nb_pass = 0;
+  unsigned int save_last_visited = _last_visited + 1;
 
  redo_check:
 
-  if (_search_uncovered_zeros_by_col)
-    {
-      for (unsigned int col = _last_visited; col < _cost_matrix_size; ++col)
-	{
-	  if (_state_col[col])
-	    continue;
-	  for (unsigned int row = 0; row < _cost_matrix_size; ++row)
-	    {
-	      if (!_state_row[row] && !m[row * _cost_matrix_size + col]._cost)
-		{
-		  r = row;
-		  c = col;
-		  _last_visited = col;
-		  return true;
-		}
-	    }
+  // We start the looking at the last visited col to optimize avoid looking
+  // at col we already checked before.
+  for (size_t col = _last_visited; col < _cost_matrix_size; ++col) {
+    // If the column is covered we can skip it
+    if (_state_col[col])
+      continue;
+
+    // // if we already check all cols after '_last_visited' one, there is no need
+    // // to do it again.
+    // if (nb_pass == 1 && save_last_visited == col)
+    //   break;
+
+    for (size_t row = 0; row < _cost_matrix_size; ++row) {
+      if (!_state_row[row] && !m[row * _cost_matrix_size + col]._cost) {
+	  r = row;
+	  c = col;
+	  // We cache the last column we visited
+	  _last_visited = col;
+	  return true;
 	}
     }
-  else
-    {
-      for (unsigned int row = _last_visited; row < _cost_matrix_size; ++row)
-  	{
-  	  if (_state_row[row])
-  	    continue;
-  	  for (unsigned int col = 0; col < _cost_matrix_size; ++col)
-  	    {
-  	      if (!_state_col[col] && !m[row * _cost_matrix_size + col]._cost)
-  		{
-  		  r = row;
-  		  c = col;
-  		  _last_visited = row;
-  		  return true;
-  		}
-  	    }
-  	}
-    }
+  }
+
+  // We increase the number of passe and we reset the _last_visited field to 0
+  // in order to restart at the beginning of the matrix. Indeed, we do not start
+  // at the first element but at the '_last_visited' col.
   ++nb_pass;
   _last_visited = 0;
+
+  // If the number of pass > 1, this means that we check ALL the matrix
+  // and we didn't find any uncovered zero.
   if (nb_pass == 1)
     goto redo_check;
   return false;
@@ -516,19 +463,20 @@ bool BinSlay::Hungarian::_find_starred_zero_in_col(unsigned int col, unsigned in
 {
   bool is_starred_zero_is_in_row = false;
 
-  for (unsigned int row = 0; row < this->_cost_matrix_size; ++row)
-    {
-      if (!_starred_col[col])
-      	continue;
+  // If the column does not contain zero, we can skip it
+  if (!_starred_col[col])
+    return false;
 
-      if (!this->m[row * _cost_matrix_size + col]._cost && // _cost = 0
-	  this->m[row * _cost_matrix_size + col]._starred) // _starred = true
-	{
-	  is_starred_zero_is_in_row = true;
-	  r = row;
-	  break;
-	}
-    }
+  for (size_t row = 0; row < this->_cost_matrix_size; ++row) {
+    
+    if (!this->m[row * _cost_matrix_size + col]._cost && // _cost = 0
+	this->m[row * _cost_matrix_size + col]._starred) // _starred = true
+      {
+	is_starred_zero_is_in_row = true;
+	r = row;
+	break;
+      }
+  }
   return is_starred_zero_is_in_row;
 }
 
@@ -536,8 +484,8 @@ bool BinSlay::Hungarian::_find_primed_zero_in_row(unsigned int row, unsigned int
 {
   bool is_primed_zero_is_in_col = false;
 
-  for (unsigned int col = 0; col < this->_cost_matrix_size; ++col)
-    {
+  for (size_t col = 0; col < this->_cost_matrix_size; ++col) {
+
       if (!this->m[row * _cost_matrix_size + col]._cost && // _cost = 0
 	  this->m[row * _cost_matrix_size + col]._primed) // _primed = true
 	{

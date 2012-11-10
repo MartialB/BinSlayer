@@ -347,6 +347,7 @@ void BinSlay::CG_Core::_run_bindiff_at_cfg_level()
   cfg_properties[BinSlay::idProperties::UP] = new BinSlay::UpProperty<BinSlay::BbNode>;
   cfg_properties[BinSlay::idProperties::DOWN] = new BinSlay::DownProperty<BinSlay::BbNode>;
   //cfg_selectors[BinSlay::idSelectors::CFG] = new BinSlay::BindiffSelector<BinSlay::BbNode>;
+  cfg_selectors[BinSlay::idSelectors::CFG] = nullptr;
   cfg_selectors[BinSlay::idSelectors::CRC32] = new BinSlay::Crc32Selector<BinSlay::BbNode>;
 
   for (auto it_map = _mapping->begin(); it_map != _mapping->end(); ++it_map) {
@@ -429,6 +430,7 @@ BinSlay::CG_Core::run_bindiff_at_cfg_level(
   cfg_properties[BinSlay::idProperties::UP] = new BinSlay::UpProperty<BinSlay::BbNode>;
   cfg_properties[BinSlay::idProperties::DOWN] = new BinSlay::DownProperty<BinSlay::BbNode>;
   cfg_selectors[BinSlay::idSelectors::CRC32] = new BinSlay::Crc32Selector<BinSlay::BbNode>;
+  cfg_selectors[BinSlay::idSelectors::CFG] = nullptr;
 
   // Create the CFG objects
   BinSlay::CFG *cfg_left = new BinSlay::CFG(&_bin_left, addr_left);
@@ -457,7 +459,9 @@ BinSlay::CG_Core::run_bindiff_at_cfg_level(
   // Get the percentage of similarty between the two compared graphs
   unsigned int max = cfg_left->getnbNode() <= cfg_right->getnbNode() ?
     cfg_right->getnbNode() : cfg_left->getnbNode();
+  //  std::cout << std::dec << "nb iso: " << cfg_nb_isomorphims << " - ";
   double res = (double)cfg_nb_isomorphims / (double)max * 100.0;
+  //std::cout << res << "%" << std::endl;
 
   // Clean the cfg_mapping
   for (auto it_map_cfg = cfg_mapping->begin(); it_map_cfg != cfg_mapping->end(); ++it_map_cfg) {

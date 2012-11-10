@@ -211,13 +211,13 @@ BinSlay::ReverseAPI::DyninstBin::recover_call_graph() const
     abort();
   }
 
-  Region *reg_got = nullptr;
+  //  Region *reg_got = nullptr;
   Region *reg_plt = nullptr;
 
-  err = obj->findRegion(reg_got, ".got");
-  if (!err) {
-    abort();
-  }
+  // err = obj->findRegion(reg_got, ".got");
+  // if (!err) {
+  //   abort();
+  // }
 
   err = obj->findRegion(reg_plt, ".plt");
   if (!err) {
@@ -239,8 +239,8 @@ BinSlay::ReverseAPI::DyninstBin::recover_call_graph() const
   // Resize the Call-Graph data structure to the number of functions found
   cg->resize(this->_co->funcs().size());
 
-  std::cerr << std::hex << "plt: 0x" << reg_plt->getRegionAddr() << " - got: 0x"
-	    << reg_got->getRegionAddr() << std::endl;
+  // std::cerr << std::hex << "plt: 0x" << reg_plt->getRegionAddr() << " - got: 0x"
+  // 	    << reg_got->getRegionAddr() << std::endl;
 
   // For each function found...
   size_t nb_nodes = 0;
@@ -249,8 +249,8 @@ BinSlay::ReverseAPI::DyninstBin::recover_call_graph() const
     Dyninst::ParseAPI::Function *f = *it_fct;
 
     //    std::cerr << std::hex << "f addr: 0x" << f->entry()->start() << std::endl; 
-    if (reg_got->isOffsetInRegion(f->entry()->start()) ||
-    	reg_plt->isOffsetInRegion(f->entry()->start())) {
+    if (/*reg_got->isOffsetInRegion(f->entry()->start()) ||
+	 */reg_plt->isOffsetInRegion(f->entry()->start())) {
       // We skip dynamic calls
       ++dynamic_calls;
     } else {
