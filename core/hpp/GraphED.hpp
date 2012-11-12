@@ -5,13 +5,14 @@
  * \date 30/06/2012
  */
 
-#ifndef GRAPHED_HH_
-# define GRAPHED_HH_
+#ifndef __GRAPHED_HH__
+# define __GRAPHED_HH__
 
 # include <iomanip>
 # include <stdlib.h>
 # include "BinSlay.hpp"
 # include "Node.hh"
+# include "FctNode.hh"
 # include "AGraph.hpp"
 # include "Hungarian.hh"
 
@@ -41,8 +42,8 @@ namespace BinSlay
       // STEP0: Extend the number of nodes in the two graphs if their sizes are not equal.
       // 
       if (setA.size() != setB.size()) {
-	unsigned nb_dummy_nodes_to_add_in_setA = setB.size();
-	unsigned nb_dummy_nodes_to_add_in_setB = setA.size();
+	unsigned int nb_dummy_nodes_to_add_in_setA = setB.size();
+	unsigned int nb_dummy_nodes_to_add_in_setB = setA.size();
 
 	// A 'null' element is a dummy node
 	while (nb_dummy_nodes_to_add_in_setA--)
@@ -247,15 +248,7 @@ namespace BinSlay
       else
 	BinSlay::Hungarian(this->_matrix, this->_cost_matrix_size, false).solve();
 
-      // Compute the approximation of the GED by collecting the results from the
-      // Hungarian algorithm
       this->_ged = 0;
-      for (size_t row = 0; row < this->_cost_matrix_size; ++row)
-	for (size_t col = 0; col < this->_cost_matrix_size; ++col)
-	  if (this->_matrix[row * _cost_matrix_size + col]._starred) {
-	    this->_ged += this->_matrix[row * _cost_matrix_size + col]._saved_cost;
-	  }
-
       // Create the edit_path, a list of Isomorphe objects
       auto *ret = new typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST;
 
@@ -266,21 +259,36 @@ namespace BinSlay
       unsigned int nb_deletions = 0;
       for (size_t row = 0; row < this->_cost_matrix_size; ++row)
 	for (size_t col = 0; col < this->_cost_matrix_size; ++col)
-	  if (this->_matrix[row * _cost_matrix_size + col]._starred) {
+	  if (this->_matrix[row * _cost_matrix_size + col]._starred &&
+	      !this->_matrix[row * _cost_matrix_size + col]._cost) {
 
-	    if (!(!_rows[row] && !_cols[col])) {
+	    //	    if (!(!_rows[row] && !_cols[col])) {
+	    if (_rows[row] || _cols[col]) {
 	      ret->push_front(new BinSlay::Isomorphes<NodeType>(
 				_rows[row],
 				_cols[col],
 				this->_matrix[row * _cost_matrix_size + col]._saved_cost)
 	      );
 	      if (_rows[row] && _cols[col])
-		++nb_substitutions;
+		{
+		  // BinSlay::FctNode *left = dynamic_cast<BinSlay::FctNode *>(_rows[row]);
+		  // BinSlay::FctNode *right = dynamic_cast<BinSlay::FctNode *>(_cols[col]);
+		  // std::cerr << left->getName()
+		  // 	    << " - " << right->getName()
+		  // 	    << "\trow: " << std::dec << row << " - col: " << col
+		  // 	    << "\tcost: "
+		  // 	    << this->_matrix[row * _cost_matrix_size + col]._saved_cost
+		  // 	    << std::endl;
+		  ++nb_substitutions;
+		}
 	      else if (!_rows[row] && _cols[col])
 		++nb_insertions;
 	      if (_rows[row] && !_cols[col])
 		++nb_deletions;
+	      // Compute the approximation of the GED by collecting the results from the
+	      // Hungarian algorithm
 	    }
+	    this->_ged += this->_matrix[row * _cost_matrix_size + col]._saved_cost;
 	  }
 #ifdef BINSLAYER_DEBUG
       std::cerr << std::dec << "swap: " << nb_substitutions
@@ -289,6 +297,7 @@ namespace BinSlay
 		<< std::endl;
 #endif // !BINSLAYER_DEBUG
       this->_edit_path = ret;
+      std::cout << "GED: " << std::dec << this->_ged << std::endl;
       return this->_ged;
     }
     
@@ -322,4 +331,4 @@ namespace BinSlay
   };
 }
 
-#endif // !GRAPHED_HH_
+#endif // !__GRAPHED_HH__

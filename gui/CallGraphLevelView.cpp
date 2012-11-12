@@ -871,8 +871,8 @@ void BinSlay::Gui::CallGraphLevelView::compute_ged()
   reset_ged();
   // Compute ged
   // TODO: options - level -> two arguments
-  _core->compute_ged(BinSlay::gedProperties::WITH_VALIDATOR);
-  //  _core->compute_ged(BinSlay::gedProperties::NO_OPTIONS);
+  //_core->compute_ged(BinSlay::gedProperties::WITH_VALIDATOR);
+  _core->compute_ged(BinSlay::gedProperties::NO_OPTIONS);
 
   // Display GED results
   convertor << _core->get_ged();
@@ -894,6 +894,7 @@ void BinSlay::Gui::CallGraphLevelView::compute_ged()
       }
     }
   }
+  std::cout << "Number of elem in get iso list: " << std::dec << edit_path->size() << std::endl;
   std::cout << std::dec << "Number of matched functions: " << matched << std::endl;
 
 

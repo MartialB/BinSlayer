@@ -185,13 +185,18 @@ namespace BinSlay
 #endif // !MEASURE_PERFORMANCE
 
       // Reset '_ged'
-      if (_ged) { delete _ged; _ged = NULL; }
+      if (_ged) { delete _ged; _ged = nullptr; }
 
       // Create the list of nodes for each graph if they not exist yet
       if (!_l_left) _l_left = _graph_left->CreateListOfNodes();
       if (!_l_right) _l_right = _graph_right->CreateListOfNodes();
 
+      // // Swap graphs in order that g1 <= g2 (performance optimization)
+      // if (_l_left->size() <= _l_right->size()) {
       _ged = new BinSlay::GraphED<NodeType>(*_graph_left, *_graph_right, *_l_left, *_l_right);
+      // } else {
+      // 	_ged = new BinSlay::GraphED<NodeType>(*_graph_right, *_graph_left, *_l_right, *_l_left);
+      // }
       _ged->compute();
 
 #ifdef MEASURE_PERFORMANCE
