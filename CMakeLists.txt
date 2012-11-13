@@ -43,7 +43,7 @@ IF(WIN32)
 ELSE()
 	SET(CMAKE_CXX_FLAGS "-W -Wall -O2 -Wextra -std=c++0x ${CMAKE_CXX_FLAGS}")
 	IF(DEBUG)
-		SET(CMAKE_CXX_FLAGS " -g3 -pg -DBINSLAYER_DEBUG ${CMAKE_CXX_FLAGS}")
+		SET(CMAKE_CXX_FLAGS " -g3 -DBINSLAYER_DEBUG ${CMAKE_CXX_FLAGS}")
 	ENDIF()
 	SET(DYNINST_LIBS ./libs/linux/i386-unknown-linux2.4/lib/)	# dyninst libraries
 ENDIF()
@@ -93,6 +93,7 @@ SET(CORE_INCS
 	${CORE_INCS_DIR}/InternalsCore.hh
 	${CORE_INCS_DIR}/Function.hh
 	${CORE_INCS_DIR}/BasicBlock.hh
+	${CORE_INCS_DIR}/BinSlayer_Exception.hh
 )
 
 # CORE hpp
@@ -128,6 +129,7 @@ SET(CORE_SRCS
 	${CORE_SRCS_DIR}/InternalsCore.cpp
 	${CORE_SRCS_DIR}/Function.cpp
 	${CORE_SRCS_DIR}/BasicBlock.cpp
+	${CORE_SRCS_DIR}/BinSlayer_Exception.cpp
 )
 
 IF(WITH_GUI)

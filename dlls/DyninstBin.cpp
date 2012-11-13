@@ -91,11 +91,19 @@ BinSlay::ReverseAPI::DyninstBin::DyninstBin(std::string path)
   std::cerr << "# Use of DyninstAPI" << std::endl;
   std::cerr << "# Binary name: " << path << std::endl;
 #endif
+}
 
+bool BinSlay::ReverseAPI::DyninstBin::init()
+{
   // Create the 'CodeObject' data
-  this->_sts = new Dyninst::ParseAPI::SymtabCodeSource((char *)path.c_str());
+  this->_sts = new Dyninst::ParseAPI::SymtabCodeSource((char *)_file_name.c_str());
+  if (!this->_sts) {
+    return false;
+  }
   this->_co = new Dyninst::ParseAPI::CodeObject(this->_sts/*, NULL, NULL, true*/);
-
+  if (!this->_co) {
+    return false;
+  }
   // Parse the binary
   this->_co->parse();
   this->_co->finalize();
@@ -109,13 +117,27 @@ BinSlay::ReverseAPI::DyninstBin::DyninstBin(std::string path)
 		<< std::endl;
     }
 #endif
-  // TODO: raise exception if DyninstAPI failed to recover functions
+  if (!this->_co->funcs().size()) {
+    // DyninstAPI failed to recover functions
+    return false;
+  }
+  return true;
+}
+
+void BinSlay::ReverseAPI::DyninstBin::delete_cg(BinSlay::ReverseAPI::CG *cg) const
+{
+  for (auto it_cg = cg->begin(); it_cg != cg->end(); ++it_cg) {
+    delete *it_cg;
+  }
+  delete cg;
 }
 
 BinSlay::ReverseAPI::DyninstBin::~DyninstBin()
 {
-  delete this->_sts;
+  // DyninstAPI Bug when we delete both ptr -> double free...
   delete this->_co;
+  //delete this->_sts;
+  // crash if we delete _sts ptr...
 }
 
 std::string const &
@@ -713,6 +735,19 @@ extern "C"
 {
   EXPORT BinSlay::ReverseAPI::IBinary *get_instance_of_binary(std::string const &file)
   {
-     return new BinSlay::ReverseAPI::DyninstBin(file);
+    auto *bin = new  BinSlay::ReverseAPI::DyninstBin(file);
+
+    // If we failed to properly load the binary, we delete the bin object and
+    // we return the nullptr.
+    if (!bin->init()) {
+      delete bin;
+      return nullptr;
+    }
+    return bin;
+  }
+
+  EXPORT void delete_instance_of_binary(BinSlay::ReverseAPI::IBinary *bin)
+  {
+    delete static_cast<BinSlay::ReverseAPI::DyninstBin *>(bin);
   }
 }

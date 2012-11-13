@@ -78,8 +78,7 @@ namespace BinSlay
       // Free allocated memory
       if (_l_left) delete _l_left;
       if (_l_right) delete _l_right;
-      if (_graph_left) delete _graph_left;
-      if (_graph_right) delete _graph_right;
+      if (_ged) delete _ged;
     }
     
     virtual bool load_graphs() = 0;
@@ -156,8 +155,8 @@ namespace BinSlay
       // Call the run method and retrieve the MAPPING
       _mapping = _bindiff->run();
 
-      // std::cout << "Unmatched nodes in left: " << _l_left->size() << std::endl;
-      // std::cout << "Unmatched nodes in right: " << _l_right->size() << std::endl;
+      std::cout << "Unmatched nodes in left: " << std::dec << _l_left->size() << std::endl;
+      std::cout << "Unmatched nodes in right: " << std::dec << _l_right->size() << std::endl;
       _bindiff->drawResults("res_left", _mapping, *_graph_left);
       _bindiff->drawResults("res_right", _mapping, *_graph_right);
 

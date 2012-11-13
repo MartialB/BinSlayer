@@ -72,7 +72,9 @@ namespace BinSlay {
     {
     public:
       virtual ~IBinary() {};
+      virtual bool init() = 0;
       virtual CG *recover_call_graph() const = 0;
+      virtual void delete_cg(CG *cg) const = 0;
       virtual CFG *recover_function_cfg(Address function) const = 0;
       virtual Crc32 get_function_crc32(Address addr) const = 0;
       virtual Crc32 get_basic_block_crc32(Address addr) const = 0;

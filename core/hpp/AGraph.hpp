@@ -26,8 +26,6 @@ namespace BinSlay
 
   public:
     AGraph() {}
-    //    AGraph(AGraph const &o) {}
-    //    AGraph& operator=(AGraph const &o);
 
     void drawMe(std::string const &path) const
     {

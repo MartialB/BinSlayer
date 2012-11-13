@@ -11,6 +11,9 @@ BinSlay::CG_Core::CG_Core(BinSlay::ReverseAPI::IBinary &_bin_left,
 
 BinSlay::CG_Core::~CG_Core()
 {
+  std::cerr << "delete of a cg_core" << std::endl;
+  delete _left;
+  delete _right;
 }
 
 bool
@@ -26,16 +29,20 @@ BinSlay::CG_Core::load_graphs()
 bool
 BinSlay::CG_Core::load_graph_left()
 {
-  if (!_graph_left)
-    _graph_left = new BinSlay::CallGraph(&_bin_left);
+  if (!_graph_left) {
+    _left = new BinSlay::CallGraph(&_bin_left);
+    _graph_left = _left;
+  }
   return true;
 }
 
 bool
 BinSlay::CG_Core::load_graph_right()
 {
-  if (!_graph_right)
-    _graph_right = new BinSlay::CallGraph(&_bin_right);
+  if (!_graph_right) {
+    _right = new BinSlay::CallGraph(&_bin_right);
+    _graph_right = _right;
+  }
   return true; 
 }
 
@@ -170,7 +177,6 @@ BinSlay::CG_Core::compute_ged(
 
 	// Call the run method and retrieve the MAPPING
 	auto *cfg_mapping = cfg_bindiff->run();
-	cfg_bindiff->re_run(*cfg_mapping);
 
 	// Get the number of isomorphims found
 	double cfg_nb_isomorphims = 0;

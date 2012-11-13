@@ -32,6 +32,10 @@ int main(int argc, char *argv[])
 
   // Create a instance of the CG_Core object
   BinSlay::CG_Core *cg_core = core.createCG_Core(argv[1], argv[2]);
+  if (core.status() != BinSlay::InternalsCore::Status::OK) {
+    std::cerr << core.getErrorBuffer().str() << std::endl;
+    return 1;
+  }
 
   ////////////////////////////////////////////////////////////
   // BinDiff Algorithm
@@ -45,84 +49,80 @@ int main(int argc, char *argv[])
   // 2- Run Bindiff algorithm
   //cg_core->run_bindiff_algorithm(BinSlay::DiffingLevel::FUNCTION);
   cg_core->run_bindiff_algorithm(BinSlay::DiffingLevel::CALL_GRAPH);
-  	// Re-Run it until no more isormorphism are found
 
-  unsigned int ret = 1;
-  while ((ret = cg_core->re_run_bindiff()));
-  // Print some information
   std::cout << "NB_ISO: " << std::dec << cg_core->get_nb_isomorphism_found()
   	    << " - NB_NODE_LEFT:" << cg_core->get_graph_left().getnbNode()
   	    << " - NB_NODE_RIGHT:" << cg_core->get_graph_right().getnbNode()
   	    << std::endl;
 
-  ////////////////////////////////////////////////////////////
-  // Ged Computation
-  //cg_core->compute_ged(BinSlay::gedProperties::WITH_VALIDATOR);
-  cg_core->compute_ged(BinSlay::gedProperties::NO_OPTIONS);
-  std::cout << "Ged: " << cg_core->get_ged() << std::endl;
+  // ////////////////////////////////////////////////////////////
+  // // Ged Computation
+  // //cg_core->compute_ged(BinSlay::gedProperties::WITH_VALIDATOR);
+  // cg_core->compute_ged(BinSlay::gedProperties::NO_OPTIONS);
+  // std::cout << "Ged: " << cg_core->get_ged() << std::endl;
 
-  // We want to count the number of isomorphisms found which have correctly matched
-  // identical functions: we consider that two functions have successfully been matched
-  // if they have the same name.
-  unsigned int matched = 0;
-  unsigned int cost = 0;
-  unsigned int nb_substitutions = 0;
-  unsigned int nb_insertions = 0;
-  unsigned int nb_deletions = 0;
-  auto *final_ep = cg_core->get_edit_path();
-  for (auto it_iso = final_ep->begin(); it_iso != final_ep->end(); ++it_iso) {
-    // if both are not null
-    if ((*it_iso)->getLeft() && (*it_iso)->getRight())
-      ++nb_substitutions;
-    else if (!(*it_iso)->getLeft() && (*it_iso)->getRight())
-      ++nb_insertions;
-    if ((*it_iso)->getLeft() && !(*it_iso)->getRight())
-      ++nb_deletions;
-    cost += (*it_iso)->getLevel();
-    if ((*it_iso)->getLeft() && (*it_iso)->getRight()) {
-      if ((*it_iso)->getLeft()->getName() == (*it_iso)->getRight()->getName()) {
-	// Reference
-	++matched;
-	if ((*it_iso)->getLevel()) {
-	  // std::cout << (*it_iso)->getLeft()->getName()  << " - "
-	  // 	    << (*it_iso)->getRight()->getName()
-	  // 	    << " - COST = " << std::dec << (*it_iso)->getLevel()
-	  // 	    << std::endl;
-	}
-      }	
-    }
-  }
-  std::cout << "Number of elem in get iso list: " << std::dec << final_ep->size() << std::endl;
-  std::cout << "Number of matched functions: " << std::dec << matched << std::endl;
-  std::cout << "Cost: " << std::dec << cost << std::endl;
+  // // We want to count the number of isomorphisms found which have correctly matched
+  // // identical functions: we consider that two functions have successfully been matched
+  // // if they have the same name.
+  // unsigned int matched = 0;
+  // unsigned int cost = 0;
+  // unsigned int nb_substitutions = 0;
+  // unsigned int nb_insertions = 0;
+  // unsigned int nb_deletions = 0;
+  // auto *final_ep = cg_core->get_edit_path();
+  // for (auto it_iso = final_ep->begin(); it_iso != final_ep->end(); ++it_iso) {
+  //   // if both are not null
+  //   if ((*it_iso)->getLeft() && (*it_iso)->getRight())
+  //     ++nb_substitutions;
+  //   else if (!(*it_iso)->getLeft() && (*it_iso)->getRight())
+  //     ++nb_insertions;
+  //   if ((*it_iso)->getLeft() && !(*it_iso)->getRight())
+  //     ++nb_deletions;
+  //   cost += (*it_iso)->getLevel();
+  //   if ((*it_iso)->getLeft() && (*it_iso)->getRight()) {
+  //     if ((*it_iso)->getLeft()->getName() == (*it_iso)->getRight()->getName()) {
+  // 	// Reference
+  // 	++matched;
+  // 	if ((*it_iso)->getLevel()) {
+  // 	  // std::cout << (*it_iso)->getLeft()->getName()  << " - "
+  // 	  // 	    << (*it_iso)->getRight()->getName()
+  // 	  // 	    << " - COST = " << std::dec << (*it_iso)->getLevel()
+  // 	  // 	    << std::endl;
+  // 	}
+  //     }	
+  //   }
+  // }
+  // std::cout << "Number of elem in get iso list: " << std::dec << final_ep->size() << std::endl;
+  // std::cout << "Number of matched functions: " << std::dec << matched << std::endl;
+  // std::cout << "Cost: " << std::dec << cost << std::endl;
 
-  std::cout << std::dec << "swap: " << nb_substitutions
-  	    << " - add: " << nb_insertions
-  	    << " - del:" << nb_deletions
-  	    << std::endl;
+  // std::cout << std::dec << "swap: " << nb_substitutions
+  // 	    << " - add: " << nb_insertions
+  // 	    << " - del:" << nb_deletions
+  // 	    << std::endl;
 
-  std::cout << "Incorrect matches: " << std::dec
-  	    << (final_ep->size() - matched - nb_insertions - nb_deletions)
-  	    << std::endl;
-  {
-    unsigned int matched = 0;
-    auto const &final_mapping = cg_core->get_mapping();
-    for (auto it_map = final_mapping.begin(); it_map != final_mapping.end(); ++it_map) {
-      for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
-  	if ((*it_iso)->getLeft() && (*it_iso)->getRight()) {
-  	  if ((*it_iso)->getLeft()->getName() == (*it_iso)->getRight()->getName()) {
-  	    // Reference
-  	  ++matched;
-  	  // std::cout << (*it_iso)->getLeft()->getName()  << " - "
-  	  // 	    << (*it_iso)->getRight()->getName()  << std::endl;
-  	  }
-  	}
-      }
-    }
-    std::cout << "FINAL Number of elem in mapping: " << std::dec
-  	      << cg_core->get_nb_isomorphism_found() << std::endl;
-    std::cout << "FINAL Number of matched functions: " << std::dec << matched << std::endl;
-  }
+  // std::cout << "Incorrect matches: " << std::dec
+  // 	    << (final_ep->size() - matched - nb_insertions - nb_deletions)
+  // 	    << std::endl;
+  // {
+  //   unsigned int matched = 0;
+  //   auto const &final_mapping = cg_core->get_mapping();
+  //   for (auto it_map = final_mapping.begin(); it_map != final_mapping.end(); ++it_map) {
+  //     for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
+  // 	if ((*it_iso)->getLeft() && (*it_iso)->getRight()) {
+  // 	  if ((*it_iso)->getLeft()->getName() == (*it_iso)->getRight()->getName()) {
+  // 	    // Reference
+  // 	  ++matched;
+  // 	  // std::cout << (*it_iso)->getLeft()->getName()  << " - "
+  // 	  // 	    << (*it_iso)->getRight()->getName()  << std::endl;
+  // 	  }
+  // 	}
+  //     }
+  //   }
+  //   std::cout << "FINAL Number of elem in mapping: " << std::dec
+  // 	      << cg_core->get_nb_isomorphism_found() << std::endl;
+  //   std::cout << "FINAL Number of matched functions: " << std::dec << matched << std::endl;
+  // }
 
 
   // /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -323,6 +323,5 @@ int main(int argc, char *argv[])
 
   // std::cout << "Number of elem in get iso list: " << std::dec << final_ep->size() << std::endl;
   // std::cout << "Number of mactched functions: " << std::dec << matched << std::endl;
-	       
   return 0;
 }

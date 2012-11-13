@@ -15,6 +15,7 @@
 # include "FctNode.hh"
 # include "AGraph.hpp"
 # include "Hungarian.hh"
+# include "BinSlayer_Exception.hh"
 
 namespace BinSlay
 {
@@ -24,6 +25,11 @@ namespace BinSlay
   class GraphED
   {
   public:
+    ~GraphED()
+    {
+      delete [] _matrix;
+    }
+    
     GraphED(
 	    AGraph<NodeType> const &g1,
 	    AGraph<NodeType> const &g2,
@@ -76,13 +82,17 @@ namespace BinSlay
       
       // TODO: WTF ????? Need to be fixed!
       // Allocate the Cost matrix
-      this->_matrix = reinterpret_cast<BinSlay::Hungarian::Cost*>(
-		malloc(sizeof(*this->_matrix) * this->_cost_matrix_size * this->_cost_matrix_size));
-      if (!this->_matrix) {
-	// TODO: run-time exception
-	std::cout << "MALLOC FAILED!" << std::endl;
-	exit(1);
-      }
+      try
+	{
+	  this->_matrix = new BinSlay::Hungarian::Cost[_cost_matrix_size * _cost_matrix_size];
+	}
+      catch (std::bad_alloc &e)
+	{
+	  std::stringstream error_msg("Critical: ");
+	  error_msg << e.what() << " in file " << __FILE__
+		    <<  " in function " << __FUNCTION__ << " at line " << __LINE__ << ".";
+	  throw BinSlay::Error(error_msg.str());
+	}
 
       //
       // STEP2: Fill the cost matrix.
@@ -135,7 +145,6 @@ namespace BinSlay
 	  // Init the booleans to false
 	  this->_matrix[row * _cost_matrix_size + col]._starred = false;
 	  this->_matrix[row * _cost_matrix_size + col]._primed = false;
-	  this->_matrix[row * _cost_matrix_size + col]._series = false;
     
 	  // Set the '_save_cost' filed
 	  this->_matrix[row * _cost_matrix_size + col]._saved_cost =
@@ -235,10 +244,6 @@ namespace BinSlay
     {
       this->_edit_path = ep;
     }
-    
-    //    GraphED(GraphED const &);
-    ~GraphED() {}
-    //    GraphED &operator=(GraphED const &);
     
     GED compute()
     {

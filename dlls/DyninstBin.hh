@@ -22,8 +22,10 @@ namespace BinSlay {
     public:
       DyninstBin(std::string path);
       virtual ~DyninstBin();
-      
+
+      virtual bool init();      
       virtual CG *recover_call_graph() const;
+      virtual void delete_cg(CG *cg) const;
       virtual CFG *recover_function_cfg(Address function) const;
       virtual std::string const &getFileName() const;
       virtual Crc32 get_function_crc32(Address addr) const;

@@ -34,17 +34,12 @@ namespace BinSlay
       _left_lookup.resize(_left.size());
       for (size_t i = 0; i < _left.size(); i++)
 	_left_lookup[i] = i;
-      _dec_left = 0;
-      
       // Init fast lookup table _right
       _right_lookup.resize(_right.size());
       for (size_t i = 0; i < _right.size(); i++)
 	_right_lookup[i] = i;
-      _dec_right = 0;
     }
-    
-    //    Bindiff(Bindiff const &o);
-    //Bindiff& operator=(Bindiff const &o);
+
     ~Bindiff()
     {
       _left_lookup.clear();
@@ -88,57 +83,15 @@ namespace BinSlay
       return ret;
     }
 
-    // TODO: do the re-run option automatically
     typename BinSlay::bind_node<NodeType>::MAPPING *
     run()
     {
-      auto *mapping = new typename BinSlay::bind_node<NodeType>::MAPPING;
-      // unsigned int old_nb_iso = 0;
-
-      // unsigned int new_nb_iso = 0;
-      typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST *IsoList = nullptr;
-      int level = 0;
-      unsigned int max_nb_nodes = _left.size() < _right.size() ? _right.size() : _left.size();
-      
-      // As long as the we found new isomorphism, we loop
-      // do 
-      //   {
-      // old_nb_iso = new_nb_iso;
-      IsoList = _GetIsoList(_left, _right, level);
-      // new_nb_iso += IsoList->size();
-      // Add the first isomorphisms found to the mapping
-      if (IsoList->size())
-  	mapping->push_back(IsoList);
-      // Recursion
-      if (IsoList->size() < max_nb_nodes)
-      	/*new_nb_iso +=*/ _recFindIso(mapping, ++level);
-      // old_nb_iso = new_nb_iso;
-      // }while (old_nb_iso != new_nb_iso);
-      
-      return mapping; 
-    }
-
-    unsigned int
-    re_run(
-	typename BinSlay::bind_node<NodeType>::MAPPING &current_mapping
-    )
-    {
       unsigned int ret = 0;
-      // Re-run the algorithm with the previous unmatched lists
-      auto *new_mapping = run();
-      
-      // Update the current mapping with the new one, if any
-      // and get the number of new isomorphism found
-      if (new_mapping->size()) {
-	for (auto it_map = new_mapping->begin(); it_map != new_mapping->end(); ++it_map) {
-	  for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
-	    ++ret;
-	  }
-	}
-	current_mapping.insert(current_mapping.end(), new_mapping->begin(), new_mapping->end());
-      }
-      delete new_mapping;
-      return ret;
+      // Get the mapping resulting from the first run of the BinDiff algorithm
+      auto *mapping = this->_run();
+      // Re-Run the algorithm until no further matches can be found
+      while ((ret = _re_run(*mapping)));      
+      return mapping; 
     }
 
     // TODO: detail explanation of how to handle those list of nodes
@@ -152,7 +105,7 @@ namespace BinSlay
       int ivl = _left_lookup[node_idx];		// get ivl
       _left_lookup[node_idx] = -1;
       _left[ivl] = _left[_left.size() - 1];    	// swap node
-      _left[_left.size() - 1] = NULL;
+      _left[_left.size() - 1] = nullptr;
       _left_lookup[tmp] = ivl;			// update ivl
       _left.pop_back();				// discard: O(1) complexity
     }
@@ -220,6 +173,46 @@ namespace BinSlay
     }
 
   private:
+    typename BinSlay::bind_node<NodeType>::MAPPING *
+    _run()
+    {
+      auto *mapping = new typename BinSlay::bind_node<NodeType>::MAPPING;
+      typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST *IsoList = nullptr;
+      int level = 0;
+      unsigned int max_nb_nodes = _left.size() < _right.size() ? _right.size() : _left.size();
+      
+      IsoList = _GetIsoList(_left, _right, level);
+      // Add the first isomorphisms found to the mapping
+      if (IsoList->size())
+  	mapping->push_back(IsoList);
+      // Recursion
+      if (IsoList->size() < max_nb_nodes)
+      	_recFindIso(mapping, ++level);
+      return mapping; 
+    }
+
+    unsigned int
+    _re_run(
+	typename BinSlay::bind_node<NodeType>::MAPPING &current_mapping
+    )
+    {
+      unsigned int ret = 0;
+      // Re-run the algorithm with the previous unmatched lists
+      auto *new_mapping = this->_run();
+      // Update the current mapping with the new one, if any
+      // and get the number of new isomorphism found
+      if (new_mapping->size()) {
+	for (auto it_map = new_mapping->begin(); it_map != new_mapping->end(); ++it_map) {
+	  for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
+	    ++ret;
+	  }
+	}
+	current_mapping.insert(current_mapping.end(), new_mapping->begin(), new_mapping->end());
+      }
+      delete new_mapping;
+      return ret;
+    }
+
     typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST *
     _GetIsoList(
 	typename BinSlay::bind_node<NodeType>::NODES_LIST &setA,
@@ -272,7 +265,7 @@ namespace BinSlay
 	  // Remove these nodes from their input list, so that we not loop again and again
 	  // with the same couple of isomorphism
 	  if (!level) {
-	    // TODO: wht special case for level ==  ? Need explanation
+	    // TODO: why special case for level == 0 ? Need explanation
 	    remove_node_from_left_list(isomorphe_left->getIdx());
 	    remove_node_from_right_list(isomorphe_right->getIdx());
 	  } else {
@@ -295,20 +288,16 @@ namespace BinSlay
 	int &recLevel
     )
     {
-      unsigned int nbIso = 0;
-      //
-      // We can do it iteratively, just by pushing each new isolist to the current
-      // mapping. But we will keep the recursion version for the time being.
       //
       // We need to go deeper in the comparison: for each couple of isomorphisms
       // found, we retry all the neighbours of each two nodes in the couple and then we
       // redo the previous step again until any further isomorphisms can be found or until
       // we reach the leafes.
-      if (mapping->size() == 0)
-	return nbIso;
-      
-      auto *sub_mapping = new typename BinSlay::bind_node<NodeType>::MAPPING;
-      
+      //
+      unsigned int nbIso = 0;
+      // If the mapping is emtpy, we do nothing
+      if (!mapping->size()) return nbIso;
+
       for (auto it_map = mapping->begin(); it_map != mapping->end(); ++it_map) {
 	for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
 	  //
@@ -320,9 +309,9 @@ namespace BinSlay
 	  //
 	  for (auto it_property = _properties.begin(); it_property != _properties.end();
 	       ++it_property) {
-	    // No property available
+	    // No property available - nullptr
 	    if (!*it_property)
-	      continue;	  
+	      continue;
 
 	    typename BinSlay::bind_node<NodeType>::NODES_LIST *subset01 = nullptr;
 	    typename BinSlay::bind_node<NodeType>::NODES_LIST *subset02 = nullptr;
@@ -345,23 +334,15 @@ namespace BinSlay
 	      }
 	      // Update nbIso
 	      nbIso += fIso->size();
-	      // Add this iso_list to the mapping
 	      if (fIso->size())
-		sub_mapping->push_back(fIso);
+		mapping->push_back(fIso);
+
 	    }
 	    delete subset01;
 	    delete subset02;
 	  }
-	}	
-      }
-      // Go deeper to find new isomorphisms in smaller subsets
-      nbIso += _recFindIso(sub_mapping, ++recLevel);
-      
-      // Add the new found mappings to the current one
-      if (sub_mapping->size())
-      	mapping->insert(mapping->end(), sub_mapping->begin(), sub_mapping->end());
-      delete sub_mapping;
-      
+	}
+      }      
       return nbIso;
     }
     
@@ -401,11 +382,10 @@ namespace BinSlay
     typename BinSlay::bind_node<NodeType>::SELECTORS	       	&_selectors;
     typename BinSlay::bind_node<NodeType>::PROPERTIES	       	&_properties;
 
-    // Need Explanation
+    // Need Explanation or even better -> encapsulate this special container in
+    // a true object
     std::vector<int>   	_left_lookup;
     std::vector<int>   	_right_lookup;
-    int		       	_dec_left;
-    int		       	_dec_right;
   };
 }
 

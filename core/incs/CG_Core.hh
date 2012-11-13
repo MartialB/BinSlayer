@@ -37,6 +37,8 @@ namespace BinSlay
 
   private:
     void _run_bindiff_at_cfg_level();
+    CallGraph	*_left;
+    CallGraph	*_right;
   };
 }
 

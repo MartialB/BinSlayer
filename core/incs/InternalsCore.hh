@@ -48,12 +48,27 @@ namespace BinSlay
   class InternalsCore
   {
   public:
+    class Status
+    {
+    public:
+      enum status_e
+	{
+	  OK = 0,
+	  DLL_LOADING_FAIL,
+	  SYMBOL_LOADING_FAIL,
+	  BINARY_LOADING_FAIL,
+	  BAD_ALLOC
+	};
+    };
+
+  public:
     InternalsCore();
     InternalsCore(InternalsCore const &o);
     ~InternalsCore();
     InternalsCore& operator=(InternalsCore const &o);
 
   public:
+    Status::status_e status() const;
     // To init the InternalsCore object. This function HAS TO BE CALLED JUST
     // AFTER the constructor.
     bool init();
@@ -83,6 +98,8 @@ namespace BinSlay
   private:
     // Ptr on function to retrieve an instance of a 'IBinary' class
     BinSlay::ReverseAPI::IBinary *(*_ptr_bin_ctor)(std::string const &);
+    void (*_ptr_bin_dtor)(BinSlay::ReverseAPI::IBinary *);
+    Status::status_e   		_current_status;
     // Dllmanager
     DllManager			_loader;
     // Error buffer

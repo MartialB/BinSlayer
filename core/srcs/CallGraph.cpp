@@ -56,7 +56,8 @@ BinSlay::CallGraph::CallGraph(BinSlay::ReverseAPI::IBinary *bin)
 	    newNode->setEdges()[j] = 0;
 	}
     }
-  delete &cg;
+  // Free memory
+  bin->delete_cg(&cg);
 }
 
 // BinSlay::CallGraph::CallGraph(CallGraph const &o)
