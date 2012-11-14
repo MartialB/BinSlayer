@@ -94,6 +94,7 @@ SET(CORE_INCS
 	${CORE_INCS_DIR}/Function.hh
 	${CORE_INCS_DIR}/BasicBlock.hh
 	${CORE_INCS_DIR}/BinSlayer_Exception.hh
+	${CORE_INCS_DIR}/Core_ErrorHandler.hh
 )
 
 # CORE hpp
@@ -130,6 +131,7 @@ SET(CORE_SRCS
 	${CORE_SRCS_DIR}/Function.cpp
 	${CORE_SRCS_DIR}/BasicBlock.cpp
 	${CORE_SRCS_DIR}/BinSlayer_Exception.cpp
+	${CORE_SRCS_DIR}/Core_ErrorHandler.cpp
 )
 
 IF(WITH_GUI)

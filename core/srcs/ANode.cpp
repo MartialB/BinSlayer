@@ -18,21 +18,9 @@ BinSlay::ANode::ANode(
 {
 }
 
-
-// BinSlay::ANode::ANode(BinSlay::ANode const &)
-// {
-  
-// }
-
-
 BinSlay::ANode::~ANode()
 {
 }
-
-
-// BinSlay::ANode& BinSlay::ANode::operator=(BinSlay::ANode const &o)
-// {
-// }
 
 void BinSlay::ANode::displayLabel() const
 {

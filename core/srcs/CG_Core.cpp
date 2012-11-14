@@ -5,13 +5,10 @@ BinSlay::CG_Core::CG_Core(BinSlay::ReverseAPI::IBinary &_bin_left,
 		    BinSlay::ReverseAPI::IBinary &_bin_right)
   : BinSlay::ACore<BinSlay::FctNode>::ACore(_bin_left, _bin_right)
 {
-  // Init the CallGraph objects
-  load_graphs();
 }
 
 BinSlay::CG_Core::~CG_Core()
 {
-  std::cerr << "delete of a cg_core" << std::endl;
   delete _left;
   delete _right;
 }
@@ -19,10 +16,8 @@ BinSlay::CG_Core::~CG_Core()
 bool
 BinSlay::CG_Core::load_graphs()
 {
-  if (!load_graph_left())
-    return false;
-  if (!load_graph_right())
-    return false;
+  if (!load_graph_left()) return false;
+  if (!load_graph_right()) return false;
   return true;
 }
 
@@ -30,27 +25,31 @@ bool
 BinSlay::CG_Core::load_graph_left()
 {
   if (!_graph_left) {
-    _left = new BinSlay::CallGraph(&_bin_left);
+    _left = new (std::nothrow) BinSlay::CallGraph(&_bin_left);
     _graph_left = _left;
   }
-  return true;
+  return _left ? true : false;
 }
 
 bool
 BinSlay::CG_Core::load_graph_right()
 {
   if (!_graph_right) {
-    _right = new BinSlay::CallGraph(&_bin_right);
+    _right = new (std::nothrow) BinSlay::CallGraph(&_bin_right);
     _graph_right = _right;
   }
-  return true; 
+  return _right ? true : false;
 }
 
-void
+bool
 BinSlay::CG_Core::add_Selector(BinSlay::idSelectors::idSelectors_e id_selec)
 {
   if (id_selec == BinSlay::idSelectors::NAME) {
-    _selectors[id_selec] = new BinSlay::SymNameSelector;
+    // If allocation of a selector fails, this is not critical, but this means
+    // that this selector will not be available.
+    _selectors[id_selec] = new (std::nothrow) BinSlay::SymNameSelector;
+    IF_NULLPTR_RETURN_FALSE(_selectors[id_selec], BinSlay::Core_ErrorHandler::Status::BAD_ALLOC,
+	"Warning: Bad allocation while trying to allocate a 'SymNameSelector' object.");
   } else {
     BinSlay::ACore<BinSlay::FctNode>::add_Selector(id_selec);
   }

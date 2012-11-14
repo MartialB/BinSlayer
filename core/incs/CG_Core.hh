@@ -29,7 +29,7 @@ namespace BinSlay
     virtual bool load_graphs();
     virtual bool load_graph_left();
     virtual bool load_graph_right();
-    virtual void add_Selector(BinSlay::idSelectors::idSelectors_e idSelector);
+    virtual bool add_Selector(BinSlay::idSelectors::idSelectors_e idSelector);
     virtual bool run_bindiff_algorithm(BinSlay::DiffingLevel level);
     virtual bool compute_ged(BinSlay::gedProperties::gedProperties_e options);
 
@@ -37,6 +37,8 @@ namespace BinSlay
 
   private:
     void _run_bindiff_at_cfg_level();
+
+  private:
     CallGraph	*_left;
     CallGraph	*_right;
   };

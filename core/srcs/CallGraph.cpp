@@ -9,13 +9,6 @@
 #include <iostream>
 #include "CallGraph.hh"
 
-/**
- * \brief	Constructor : Initialise the CallGraph object with a vector
- *		of Nodes.
- *
- * \param[in]	graphDesc File which contains the description of the graph.
- */
-
 BinSlay::CallGraph::CallGraph(BinSlay::ReverseAPI::IBinary *bin)
   : BinSlay::AGraph<BinSlay::FctNode>::AGraph()
 {
@@ -23,7 +16,7 @@ BinSlay::CallGraph::CallGraph(BinSlay::ReverseAPI::IBinary *bin)
 
   this->_nbNode = cg.size();
   this->_matrix.resize(cg.size());
-  for (unsigned int i = 0; i < cg.size(); ++i)
+  for (size_t i = 0; i < cg.size(); ++i)
     {
       BinSlay::FctNode *newNode = new BinSlay::FctNode(
 		      i,
@@ -39,22 +32,18 @@ BinSlay::CallGraph::CallGraph(BinSlay::ReverseAPI::IBinary *bin)
       );
       this->_matrix[i] = newNode;
       newNode->setEdges().resize(cg.size());      
-      for (unsigned int j = 0; j < cg.size(); j++)
-	{
-	  bool linked = false;
-	  for (std::list<unsigned long>::const_iterator it2 = cg[i]->_link_to.begin();
-	       it2 != cg[i]->_link_to.end(); ++it2)
-	    {
-	      if (cg[j]->_addr == *it2)
-		{
-		  linked = true;
-		  newNode->setEdges()[j] = 1;
-		  break;
-		}
-	    }
-	  if (linked == false)
-	    newNode->setEdges()[j] = 0;
+      for (size_t j = 0; j < cg.size(); j++) {
+	bool linked = false;
+	for (auto it2 = cg[i]->_link_to.begin(); it2 != cg[i]->_link_to.end(); ++it2) {
+	  if (cg[j]->_addr == *it2) {
+	    linked = true;
+	    newNode->setEdges()[j] = 1;
+	    break;
+	  }
 	}
+	if (linked == false)
+	  newNode->setEdges()[j] = 0;
+      }
     }
   // Free memory
   bin->delete_cg(&cg);
@@ -80,10 +69,9 @@ unsigned int BinSlay::CallGraph::get_total_nb_of_basic_blocks() const
 {
   unsigned int total_nb_of_basic_blocks = 0;
 
-  for (unsigned int i = 0; i < this->_nbNode; ++i)
-    {
-      total_nb_of_basic_blocks += this->_matrix[i]->getLabel().getX();
-    }
+  for (size_t i = 0; i < this->_nbNode; ++i) {
+    total_nb_of_basic_blocks += this->_matrix[i]->getLabel().getX();
+  }
   return total_nb_of_basic_blocks;
 }
 
@@ -91,9 +79,8 @@ unsigned int BinSlay::CallGraph::get_total_nb_of_edges() const
 {
   unsigned int total_nb_of_edges = 0;
 
-  for (unsigned int i = 0; i < this->_nbNode; ++i)
-    {
-      total_nb_of_edges += this->_matrix[i]->getLabel().getY();
-    }
+  for (size_t i = 0; i < this->_nbNode; ++i) {
+    total_nb_of_edges += this->_matrix[i]->getLabel().getY();
+  }
   return total_nb_of_edges;
 }

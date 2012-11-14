@@ -10,8 +10,8 @@
 
 # include <time.h>
 # include <unistd.h>
-# include <sstream>
 
+# include "Core_ErrorHandler.hh"
 # include "BinDiff.hh"
 # include "BinSlay.hpp"
 # include "AGraph.hpp"
@@ -26,7 +26,7 @@
 namespace BinSlay
 {
   template<typename NodeType>
-  class ACore
+  class ACore : public Core_ErrorHandler
   {
   public:
     ACore(BinSlay::ReverseAPI::IBinary &_bin_left,
@@ -93,13 +93,14 @@ namespace BinSlay
     }
 
     // Function to add/remove a selector
-    virtual void add_Selector(BinSlay::idSelectors::idSelectors_e id_selec)
+    virtual bool add_Selector(BinSlay::idSelectors::idSelectors_e id_selec)
     {
       if (id_selec == BinSlay::idSelectors::CFG) {
 	_selectors[id_selec] = new BinSlay::BindiffSelector<NodeType>;
       } else if (id_selec == BinSlay::idSelectors::CRC32) {
 	_selectors[id_selec] = new BinSlay::Crc32Selector<NodeType>;
       }
+      return true;
     }
 
     void remove_Selector(int id_selec)
@@ -109,13 +110,14 @@ namespace BinSlay
     }
 
     // Function to add/remove a property
-    void add_Property(BinSlay::idProperties::idProperties_e id_property)
+    bool add_Property(BinSlay::idProperties::idProperties_e id_property)
     {
       if (id_property == BinSlay::idProperties::UP) {
 	_properties[id_property] = new BinSlay::UpProperty<NodeType>;
       } else if (id_property == BinSlay::idProperties::DOWN) {
 	_properties[id_property] = new BinSlay::DownProperty<NodeType>;
       }
+      return true;
     }
 
     void remove_Property(BinSlay::idProperties::idProperties_e id_property)

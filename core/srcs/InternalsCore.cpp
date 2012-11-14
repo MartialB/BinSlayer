@@ -1,14 +1,10 @@
 #include "InternalsCore.hh"
 
 BinSlay::InternalsCore::InternalsCore()
-  : _ptr_bin_ctor(nullptr),
-    _current_status(BinSlay::InternalsCore::Status::OK)
+  : BinSlay::Core_ErrorHandler(),
+    _ptr_bin_ctor(nullptr),
+    _ptr_bin_dtor(nullptr)
 {
-}
-
-BinSlay::InternalsCore::Status::status_e BinSlay::InternalsCore::status() const
-{
-  return _current_status;
 }
 
 bool BinSlay::InternalsCore::init()
@@ -18,7 +14,7 @@ bool BinSlay::InternalsCore::init()
     return false;
   // We set the current status to true meaning the initialisation of the BinSlayer
   // internal core went just fine.
-  _current_status = BinSlay::InternalsCore::Status::OK;
+  _current_status = BinSlay::Core_ErrorHandler::Status::OK;
   return true;
 }
 
@@ -26,8 +22,8 @@ BinSlay::InternalsCore::~InternalsCore()
 {
   // If the current status is 'DLL_LOADING_FAIL' or 'SYMBOL_LOADING_FAIL', we do not
   // perform any cleaning operations because we do not know if the object is still valid.
-  if (_current_status == BinSlay::InternalsCore::Status::DLL_LOADING_FAIL ||
-      _current_status == BinSlay::InternalsCore::Status::SYMBOL_LOADING_FAIL)
+  if (_current_status == BinSlay::Core_ErrorHandler::Status::DLL_LOADING_FAIL ||
+      _current_status == BinSlay::Core_ErrorHandler::Status::SYMBOL_LOADING_FAIL)
     return;
   // We can delete all internals lists.
   for (auto it_bb_core = _bb_cores.begin(); it_bb_core != _bb_cores.end(); ++it_bb_core) {
@@ -61,30 +57,38 @@ BinSlay::InternalsCore::createCG_Core(
 {
   // Load binary 1
   ReverseAPI::IBinary *left = _loadBinary(bin1);
-  if (!left) {
-    _buf_error << "Critical: Failed to load binary '" << bin1 << "'.";
-    _current_status = BinSlay::InternalsCore::Status::BINARY_LOADING_FAIL;
-    return nullptr;
-  }
+  IF_NULLPTR_RETURN_NULL(left, BinSlay::Core_ErrorHandler::Status::BINARY_LOADING_FAIL,
+		       "Critical: Failed to load binary '%s'.", bin1.c_str());
   // Load binary 2
   ReverseAPI::IBinary *right = _loadBinary(bin2);
   if (!right) {
     _buf_error << "Critical: Failed to load binary '" << bin2 << "'.";
     delete left;
-    _current_status = BinSlay::InternalsCore::Status::BINARY_LOADING_FAIL;
+    _current_status = BinSlay::Core_ErrorHandler::Status::BINARY_LOADING_FAIL;
     return nullptr;
   }
   // Create a new instance of a CG_Core object
   CG_Core *cg_core = new (std::nothrow) CG_Core(*left, *right);
   if (!cg_core) {
-    _buf_error << "Critical: Bad allocation while trying to allocate a cg_core."
+    _buf_error << "Critical: Bad allocation while trying to allocate a 'CG_Core' object."
 	       << "  File: " << __FILE__ << std::endl
 	       << "  Function: " << __FUNCTION__ << std::endl
 	       << "  Line: " << __LINE__;
-    _current_status = BinSlay::InternalsCore::Status::BAD_ALLOC;
+    _current_status = BinSlay::Core_ErrorHandler::Status::BAD_ALLOC;
     delete left;
     delete right;
     return nullptr;
+  }
+  // Load graphs into this new instance
+  if (!cg_core->load_graphs()) {
+    _buf_error << "Critical: Bad allocation while trying to allocate 'CallGraph' object."
+	       << "  File: " << __FILE__ << std::endl
+	       << "  Function: " << __FUNCTION__ << std::endl
+	       << "  Line: " << __LINE__;
+    _current_status = BinSlay::Core_ErrorHandler::Status::BAD_ALLOC;
+    delete left;
+    delete right;
+    return nullptr;    
   }
   // Add this instance into the '_cg_cores' map
   _cg_cores.insert({cg_core, {left, right}});
@@ -102,14 +106,8 @@ BinSlay::InternalsCore::createCFG_Core(
   // Create a new instance of a CFG_Core object
   CFG_Core *cfg_core = new (std::nothrow) CFG_Core( *_cg_cores[cg_core].first,
 	*_cg_cores[cg_core].second, fct1, fct2);
-  if (!cfg_core) {
-    _buf_error << "Critical: Bad allocation while trying to allocate a cfg_core."
-	       << "  File: " << __FILE__ << std::endl
-	       << "  Function: " << __FUNCTION__ << std::endl
-	       << "  Line: " << __LINE__;
-    _current_status = BinSlay::InternalsCore::Status::BAD_ALLOC;
-    return nullptr;
-  }
+  IF_NULLPTR_RETURN_NULL(cfg_core, BinSlay::Core_ErrorHandler::Status::BAD_ALLOC,
+		       "Critical: Bad allocation while trying to allocate a 'cfg_core'.");
   // Add this instance into the '_cfg_cores' map
   _cfg_cores.insert({cfg_core, {_cg_cores[cg_core].first, _cg_cores[cg_core].second}});
   // Return the ptr on the created cfg_core
@@ -128,14 +126,8 @@ BinSlay::InternalsCore::createBasicBlock_Core(
 	*create_basic_block(cfg_core, bb1, 0),
 	*create_basic_block(cfg_core, bb2, 1)
   );
-  if (!bb_core) {
-    _buf_error << "Critical: Bad allocation while trying to allocate a bb_core."
-	       << "  File: " << __FILE__ << std::endl
-	       << "  Function: " << __FUNCTION__ << std::endl
-	       << "  Line: " << __LINE__;
-    _current_status = BinSlay::InternalsCore::Status::BAD_ALLOC;
-    return nullptr;
-  }
+  IF_NULLPTR_RETURN_NULL(bb_core, BinSlay::Core_ErrorHandler::Status::BAD_ALLOC,
+		       "Critical: Bad allocation while trying to allocate a 'bb_core'.");
   // Add this instance into the '_bb_cores' map
   _bb_cores.insert({bb_core, {_cfg_cores[cfg_core].first, _cfg_cores[cfg_core].second}});
   // Return the ptr on the created bb_core
@@ -171,11 +163,6 @@ void BinSlay::InternalsCore::deleteBasicBlock_Core(BinSlay::BasicBlock_Core *bb_
   _bb_cores.erase(it);
 }
 
-std::stringstream const &BinSlay::InternalsCore::getErrorBuffer() const
-{
-  return this->_buf_error;
-}
-
 BinSlay::Function *
 BinSlay::InternalsCore::create_function(
 	BinSlay::CG_Core *cg_core,
@@ -198,13 +185,8 @@ BinSlay::InternalsCore::create_function(
 	function = new (std::nothrow) BinSlay::Function(_cg_cores[cg_core].second, **it_node, addr);
     }
   }
-  if (!function) {
-    _buf_error << "Critical: Bad allocation while trying to allocate a function object."
-	       << "  File: " << __FILE__ << std::endl
-	       << "  Function: " << __FUNCTION__ << std::endl
-	       << "  Line: " << __LINE__;
-    _current_status = BinSlay::InternalsCore::Status::BAD_ALLOC;
-  }  
+  IF_NULLPTR(function, BinSlay::Core_ErrorHandler::Status::BAD_ALLOC,
+	     "Critical: Bad allocation while trying to allocate a 'Function' object.");
   return function;
 }
 
@@ -234,13 +216,8 @@ BinSlay::InternalsCore::create_basic_block(
       }
     }
   }
-  if (!basic_block) {
-    _buf_error << "Critical: Bad allocation while trying to allocate a basic_block object."
-	       << "  File: " << __FILE__ << std::endl
-	       << "  Function: " << __FUNCTION__ << std::endl
-	       << "  Line: " << __LINE__;
-    _current_status = BinSlay::InternalsCore::Status::BAD_ALLOC;
-  }  
+  IF_NULLPTR(basic_block, BinSlay::Core_ErrorHandler::Status::BAD_ALLOC,
+	     "Critical: Bad allocation while trying to allocate a 'BasicBlock' object.");
   return basic_block;
 }
 
@@ -252,7 +229,7 @@ bool BinSlay::InternalsCore::_loadInternalLibraries()
 	       << "=> You need to place the 'libBinaryHelper.{ext}'" << std::endl
 	       << " in the same directories where resides the 'BinSlayer' executable." << std::endl
 	       << " Please see the readme and/or the documentation for more information.";
-    _current_status = BinSlay::InternalsCore::Status::DLL_LOADING_FAIL;
+    _current_status = BinSlay::Core_ErrorHandler::Status::DLL_LOADING_FAIL;
     return false;
   }
   // Retrieve the symbol 'get_instance_of_binary' from the 'BinaryHelper' dynamic library
@@ -262,7 +239,7 @@ bool BinSlay::InternalsCore::_loadInternalLibraries()
   if (!_ptr_bin_ctor) {
     _buf_error << "Critical: Fail to load symbol 'get_instance_of_binary'." << std::endl;
     _loader.CloseLibrary("BinaryHelper");
-    _current_status = BinSlay::InternalsCore::Status::SYMBOL_LOADING_FAIL;
+    _current_status = BinSlay::Core_ErrorHandler::Status::SYMBOL_LOADING_FAIL;
     return false;
   }
   // Retrieve the symbol 'delete_instance_of_binary' from the 'BinaryHelper' dynamic library
@@ -271,7 +248,7 @@ bool BinSlay::InternalsCore::_loadInternalLibraries()
   if (!_ptr_bin_dtor) {
     _buf_error << "Critical: Fail to load symbol 'delete_instance_of_binary'." << std::endl;
     _loader.CloseLibrary("BinaryHelper");
-    _current_status = BinSlay::InternalsCore::Status::SYMBOL_LOADING_FAIL;
+    _current_status = BinSlay::Core_ErrorHandler::Status::SYMBOL_LOADING_FAIL;
     return false;
   }
   return true;
