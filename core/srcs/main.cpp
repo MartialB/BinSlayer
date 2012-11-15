@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
   //cg_core->add_Selector(BinSlay::idSelectors::NAME);
   cg_core->add_Selector(BinSlay::idSelectors::CRC32);
   cg_core->add_Selector(BinSlay::idSelectors::CFG);
+
+  //  cg_core->diff();
   // 2- Run Bindiff algorithm
   //cg_core->run_bindiff_algorithm(BinSlay::DiffingLevel::FUNCTION);
   cg_core->run_bindiff_algorithm(BinSlay::DiffingLevel::CALL_GRAPH);
@@ -57,72 +59,73 @@ int main(int argc, char *argv[])
 
   ////////////////////////////////////////////////////////////
   // Ged Computation
-  //cg_core->compute_ged(BinSlay::gedProperties::WITH_VALIDATOR);
-  cg_core->compute_ged(BinSlay::gedProperties::NO_OPTIONS);
+  cg_core->compute_ged(BinSlay::gedProperties::WITH_VALIDATOR);
+  //cg_core->compute_ged(BinSlay::gedProperties::NO_OPTIONS);
   std::cout << "Ged: " << cg_core->get_ged() << std::endl;
 
-  // We want to count the number of isomorphisms found which have correctly matched
-  // identical functions: we consider that two functions have successfully been matched
-  // if they have the same name.
-  unsigned int matched = 0;
-  unsigned int cost = 0;
-  unsigned int nb_substitutions = 0;
-  unsigned int nb_insertions = 0;
-  unsigned int nb_deletions = 0;
-  auto *final_ep = cg_core->get_edit_path();
-  for (auto it_iso = final_ep->begin(); it_iso != final_ep->end(); ++it_iso) {
-    // if both are not null
-    if ((*it_iso)->getLeft() && (*it_iso)->getRight())
-      ++nb_substitutions;
-    else if (!(*it_iso)->getLeft() && (*it_iso)->getRight())
-      ++nb_insertions;
-    if ((*it_iso)->getLeft() && !(*it_iso)->getRight())
-      ++nb_deletions;
-    cost += (*it_iso)->getLevel();
-    if ((*it_iso)->getLeft() && (*it_iso)->getRight()) {
-      if ((*it_iso)->getLeft()->getName() == (*it_iso)->getRight()->getName()) {
-  	// Reference
-  	++matched;
-  	if ((*it_iso)->getLevel()) {
-  	  // std::cout << (*it_iso)->getLeft()->getName()  << " - "
-  	  // 	    << (*it_iso)->getRight()->getName()
-  	  // 	    << " - COST = " << std::dec << (*it_iso)->getLevel()
-  	  // 	    << std::endl;
-  	}
-      }	
+  {
+    // We want to count the number of isomorphisms found which have correctly matched
+    // identical functions: we consider that two functions have successfully been matched
+    // if they have the same name.
+    unsigned int matched = 0;
+    unsigned int nb_substitutions = 0;
+    unsigned int nb_insertions = 0;
+    unsigned int nb_deletions = 0;
+    unsigned int cost = 0;
+    auto *final_ep = cg_core->get_edit_path();
+    for (auto it_iso = final_ep->begin(); it_iso != final_ep->end(); ++it_iso) {
+      // if both are not null
+      if ((*it_iso)->getLeft() && (*it_iso)->getRight())
+	++nb_substitutions;
+      else if (!(*it_iso)->getLeft() && (*it_iso)->getRight())
+	++nb_insertions;
+      if ((*it_iso)->getLeft() && !(*it_iso)->getRight())
+	++nb_deletions;
+      cost += (*it_iso)->getLevel();
+      if ((*it_iso)->getLeft() && (*it_iso)->getRight()) {
+	if ((*it_iso)->getLeft()->getName() == (*it_iso)->getRight()->getName()) {
+	  ++matched;
+	  if ((*it_iso)->getLevel()) {
+	    // std::cout << (*it_iso)->getLeft()->getName()  << " - "
+	    // 	    << (*it_iso)->getRight()->getName()
+	    // 	    << " - COST = " << std::dec << (*it_iso)->getLevel()
+	    // 	    << std::endl;
+	  }
+	}	
+      }
     }
+    std::cout << "Number of elem in get iso list: " << std::dec << final_ep->size() << std::endl;
+    std::cout << "Number of matched functions: " << std::dec << matched << std::endl;
+    std::cout << "Cost: " << std::dec << cost << std::endl;
+
+    std::cout << std::dec << "swap: " << nb_substitutions
+	      << " - add: " << nb_insertions
+	      << " - del:" << nb_deletions
+	      << std::endl;
+
+    std::cout << "Incorrect matches: " << std::dec
+	      << (final_ep->size() - matched - nb_insertions - nb_deletions)
+	      << std::endl;
   }
-  std::cout << "Number of elem in get iso list: " << std::dec << final_ep->size() << std::endl;
-  std::cout << "Number of matched functions: " << std::dec << matched << std::endl;
-  std::cout << "Cost: " << std::dec << cost << std::endl;
-
-  std::cout << std::dec << "swap: " << nb_substitutions
-  	    << " - add: " << nb_insertions
-  	    << " - del:" << nb_deletions
-  	    << std::endl;
-
-  // std::cout << "Incorrect matches: " << std::dec
-  // 	    << (final_ep->size() - matched - nb_insertions - nb_deletions)
-  // 	    << std::endl;
-  // {
-  //   unsigned int matched = 0;
-  //   auto const &final_mapping = cg_core->get_mapping();
-  //   for (auto it_map = final_mapping.begin(); it_map != final_mapping.end(); ++it_map) {
-  //     for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
-  // 	if ((*it_iso)->getLeft() && (*it_iso)->getRight()) {
-  // 	  if ((*it_iso)->getLeft()->getName() == (*it_iso)->getRight()->getName()) {
-  // 	    // Reference
-  // 	  ++matched;
-  // 	  // std::cout << (*it_iso)->getLeft()->getName()  << " - "
-  // 	  // 	    << (*it_iso)->getRight()->getName()  << std::endl;
-  // 	  }
-  // 	}
-  //     }
-  //   }
-  //   std::cout << "FINAL Number of elem in mapping: " << std::dec
-  // 	      << cg_core->get_nb_isomorphism_found() << std::endl;
-  //   std::cout << "FINAL Number of matched functions: " << std::dec << matched << std::endl;
-  // }
+  {
+    unsigned int matched = 0;
+    auto const &final_mapping = cg_core->get_mapping();
+    for (auto it_map = final_mapping.begin(); it_map != final_mapping.end(); ++it_map) {
+      for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
+  	if ((*it_iso)->getLeft() && (*it_iso)->getRight()) {
+  	  if ((*it_iso)->getLeft()->getName() == (*it_iso)->getRight()->getName()) {
+  	    // Reference
+  	  ++matched;
+  	  // std::cout << (*it_iso)->getLeft()->getName()  << " - "
+  	  // 	    << (*it_iso)->getRight()->getName()  << std::endl;
+  	  }
+  	}
+      }
+    }
+    std::cout << "FINAL Number of elem in mapping: " << std::dec
+  	      << cg_core->get_nb_isomorphism_found() << std::endl;
+    std::cout << "FINAL Number of matched functions: " << std::dec << matched << std::endl;
+  }
 
 
   // /////////////////////////////////////////////////////////////////////////////////////////////////

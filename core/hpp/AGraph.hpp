@@ -66,17 +66,11 @@ namespace BinSlay
       return this->_nbNode;
     }
     
-    typename BinSlay::bind_node<NodeType>::NODES_LIST *CreateListOfNodes() const
+    void CreateListOfNodes(typename BinSlay::bind_node<NodeType>::NODES_LIST &ret) const
     {
-      typename BinSlay::bind_node<NodeType>::NODES_LIST *ret =
-	new typename BinSlay::bind_node<NodeType>::NODES_LIST;
-      
-      for (typename BinSlay::bind_node<NodeType>::NODES_LIST::const_iterator it = this->_matrix.begin();
-	   it != this->_matrix.end(); ++it)
-	{
-	  ret->push_back(*it);
-	}
-      return ret;
+      for (auto it = this->_matrix.begin(); it != this->_matrix.end(); ++it) {
+	ret.push_back(*it);
+      }
     }
     
     void displayMatrix() const

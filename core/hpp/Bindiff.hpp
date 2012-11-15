@@ -23,8 +23,8 @@ namespace BinSlay
   public:
     Bindiff(typename BinSlay::bind_node<NodeType>::NODES_LIST &left,
 	    typename BinSlay::bind_node<NodeType>::NODES_LIST &right,
-	    typename BinSlay::bind_node<NodeType>::SELECTORS &selectors,
-	    typename BinSlay::bind_node<NodeType>::PROPERTIES &properties)
+	    typename BinSlay::bind_node<NodeType>::SELECTORS const &selectors,
+	    typename BinSlay::bind_node<NodeType>::PROPERTIES const &properties)
       : _left(left),
 	_right(right),
 	_selectors(selectors),
@@ -83,15 +83,35 @@ namespace BinSlay
       return ret;
     }
 
-    typename BinSlay::bind_node<NodeType>::MAPPING *
-    run()
+    void run(typename BinSlay::bind_node<NodeType>::MAPPING &mapping)
     {
       unsigned int ret = 0;
       // Get the mapping resulting from the first run of the BinDiff algorithm
-      auto *mapping = this->_run();
+      this->_run(mapping);
       // Re-Run the algorithm until no further matches can be found
-      while ((ret = _re_run(*mapping)));      
-      return mapping; 
+      while ((ret = this->re_run(mapping)));
+    }
+
+    unsigned int
+    re_run(
+	typename BinSlay::bind_node<NodeType>::MAPPING &current_mapping
+    )
+    {
+      unsigned int ret = 0;
+      // Re-run the algorithm with the previous unmatched lists
+      typename BinSlay::bind_node<NodeType>::MAPPING new_mapping;
+      this->_run(new_mapping);
+      // Update the current mapping with the new one, if any
+      // and get the number of new isomorphism found
+      if (new_mapping.size()) {
+	for (auto it_map = new_mapping.begin(); it_map != new_mapping.end(); ++it_map) {
+	  for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
+	    ++ret;
+	  }
+	}
+	current_mapping.insert(current_mapping.end(), new_mapping.begin(), new_mapping.end());
+      }
+      return ret;
     }
 
     // TODO: detail explanation of how to handle those list of nodes
@@ -173,10 +193,8 @@ namespace BinSlay
     }
 
   private:
-    typename BinSlay::bind_node<NodeType>::MAPPING *
-    _run()
+    void _run(typename BinSlay::bind_node<NodeType>::MAPPING &mapping)
     {
-      auto *mapping = new typename BinSlay::bind_node<NodeType>::MAPPING;
       typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST *IsoList = nullptr;
       int level = 0;
       unsigned int max_nb_nodes = _left.size() < _right.size() ? _right.size() : _left.size();
@@ -184,33 +202,10 @@ namespace BinSlay
       IsoList = _GetIsoList(_left, _right, level);
       // Add the first isomorphisms found to the mapping
       if (IsoList->size())
-  	mapping->push_back(IsoList);
+  	mapping.push_back(IsoList);
       // Recursion
       if (IsoList->size() < max_nb_nodes)
-      	_recFindIso(mapping, ++level);
-      return mapping; 
-    }
-
-    unsigned int
-    _re_run(
-	typename BinSlay::bind_node<NodeType>::MAPPING &current_mapping
-    )
-    {
-      unsigned int ret = 0;
-      // Re-run the algorithm with the previous unmatched lists
-      auto *new_mapping = this->_run();
-      // Update the current mapping with the new one, if any
-      // and get the number of new isomorphism found
-      if (new_mapping->size()) {
-	for (auto it_map = new_mapping->begin(); it_map != new_mapping->end(); ++it_map) {
-	  for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
-	    ++ret;
-	  }
-	}
-	current_mapping.insert(current_mapping.end(), new_mapping->begin(), new_mapping->end());
-      }
-      delete new_mapping;
-      return ret;
+      	_recFindIso(mapping, ++level); 
     }
 
     typename BinSlay::bind_node<NodeType>::ISOMORPHES_LIST *
@@ -284,7 +279,7 @@ namespace BinSlay
 
     unsigned int
     _recFindIso(
-	typename BinSlay::bind_node<NodeType>::MAPPING* mapping,
+	typename BinSlay::bind_node<NodeType>::MAPPING &mapping,
 	int &recLevel
     )
     {
@@ -296,9 +291,9 @@ namespace BinSlay
       //
       unsigned int nbIso = 0;
       // If the mapping is emtpy, we do nothing
-      if (!mapping->size()) return nbIso;
+      if (!mapping.size()) return nbIso;
 
-      for (auto it_map = mapping->begin(); it_map != mapping->end(); ++it_map) {
+      for (auto it_map = mapping.begin(); it_map != mapping.end(); ++it_map) {
 	for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
 	  //
 	  // We need to define as many as possible properties here in order
@@ -335,7 +330,7 @@ namespace BinSlay
 	      // Update nbIso
 	      nbIso += fIso->size();
 	      if (fIso->size())
-		mapping->push_back(fIso);
+		mapping.push_back(fIso);
 
 	    }
 	    delete subset01;
@@ -348,11 +343,11 @@ namespace BinSlay
     
     Isomorphes<NodeType> *
     _GetIsomorphes_left(
-	typename BinSlay::bind_node<NodeType>::MAPPING *mapping,
+	typename BinSlay::bind_node<NodeType>::MAPPING &mapping,
 	NodeType *node
     )
     {
-      for (auto it_map = mapping->begin(); it_map != mapping->end(); ++it_map) {
+      for (auto it_map = mapping.begin(); it_map != mapping.end(); ++it_map) {
 	for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
 	  if ((*it_iso)->getLeft()->getIdx() == node->getIdx())
 	    return *it_iso;
@@ -363,11 +358,11 @@ namespace BinSlay
     
     Isomorphes<NodeType> *
     _GetIsomorphes_right(
-       	typename BinSlay::bind_node<NodeType>::MAPPING *mapping,
+       	typename BinSlay::bind_node<NodeType>::MAPPING &mapping,
 	NodeType *node
     )
     {
-      for (auto it_map = mapping->begin(); it_map != mapping->end(); ++it_map) {
+      for (auto it_map = mapping.begin(); it_map != mapping.end(); ++it_map) {
 	for (auto it_iso = (*it_map)->begin(); it_iso != (*it_map)->end(); ++it_iso) {
 	  if ((*it_iso)->getRight()->getIdx() == node->getIdx())
 	    return *it_iso;
@@ -379,8 +374,8 @@ namespace BinSlay
   private:
     typename BinSlay::bind_node<NodeType>::NODES_LIST		&_left;
     typename BinSlay::bind_node<NodeType>::NODES_LIST		&_right;
-    typename BinSlay::bind_node<NodeType>::SELECTORS	       	&_selectors;
-    typename BinSlay::bind_node<NodeType>::PROPERTIES	       	&_properties;
+    typename BinSlay::bind_node<NodeType>::SELECTORS	       	const &_selectors;
+    typename BinSlay::bind_node<NodeType>::PROPERTIES	       	const &_properties;
 
     // Need Explanation or even better -> encapsulate this special container in
     // a true object

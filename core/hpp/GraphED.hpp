@@ -21,6 +21,9 @@ namespace BinSlay
 {
   typedef unsigned int GED;
 
+  template<typename NodeType> class ACore;
+
+  // template on a CoreType ?
   template<typename NodeType>
   class GraphED
   {
@@ -31,11 +34,13 @@ namespace BinSlay
     }
     
     GraphED(
+	    ACore<NodeType> &core,
 	    AGraph<NodeType> const &g1,
 	    AGraph<NodeType> const &g2,
 	    typename BinSlay::bind_node<NodeType>::NODES_LIST &setA,
 	    typename BinSlay::bind_node<NodeType>::NODES_LIST &setB)
-      : _g1(g1),
+      : _core(core),
+	_g1(g1),
 	_g2(g2),
 	_ged(-1),
 	_osize_g1(setA.size()),
@@ -120,9 +125,14 @@ namespace BinSlay
 	unsigned int col = 0;      
 	for (auto itB = setB.begin(); itB != setB.end(); ++itB) {
 	  if (*itA && *itB) {
+	    //double coeff = core.run_bindiff_on_two_nodes((*itA)->getAddr(), (*itB)->getAddr()) / 100;
+	    // std::cerr << " - (";
+	    // std::cerr << std::dec << coeff << ",";
 	    // upper left: substitution
 	    this->_matrix[row * _cost_matrix_size + col]._cost =
-	      (*itA)->assign_substitution_cost(**itB);
+	      ((*itA)->assign_substitution_cost(**itB));// * (coeff ? 1 - coeff : 1);
+	    // std::cerr << std::dec
+	    // 	      << this->_matrix[row * _cost_matrix_size + col]._cost << ")";
 	  } else if (*itA && !*itB) {
 	    // upper right: deletion in g1
 	    if (col - this->_osize_g2 == row) 
@@ -295,14 +305,14 @@ namespace BinSlay
 	    }
 	    this->_ged += this->_matrix[row * _cost_matrix_size + col]._saved_cost;
 	  }
-#ifdef BINSLAYER_DEBUG
-      std::cerr << std::dec << "swap: " << nb_substitutions
-		<< " - add: " << nb_insertions
-		<< " - del:" << nb_deletions
-		<< std::endl;
-#endif // !BINSLAYER_DEBUG
+// #ifdef BINSLAYER_DEBUG
+//       std::cerr << std::dec << "swap: " << nb_substitutions
+// 		<< " - add: " << nb_insertions
+// 		<< " - del:" << nb_deletions
+// 		<< std::endl;
+// #endif // !BINSLAYER_DEBUG
       this->_edit_path = ret;
-      std::cout << "GED: " << std::dec << this->_ged << std::endl;
+      //      std::cout << "GED: " << std::dec << this->_ged << std::endl;
       return this->_ged;
     }
     
@@ -320,6 +330,7 @@ namespace BinSlay
     }
 
   private:
+    ACore<NodeType> &_core;
     AGraph<NodeType> const &_g1;
     AGraph<NodeType> const &_g2;
     GED	_ged;

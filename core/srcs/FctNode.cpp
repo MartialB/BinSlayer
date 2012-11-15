@@ -55,19 +55,21 @@ unsigned int BinSlay::FctNode::assign_substitution_cost(BinSlay::ANode const &o)
   // cost + the Neighborhood cost which is equal to the Neighborhood_cost_IN
   // and Neighborhood_cost_OUT.
 
-	// relabeling cost
+  	// relabeling cost
   cost += this->getLabel().get_relabeling_cost(to.getLabel());
 
-  // 	// Neighborhood cost IN
-  // cost += this->getInEdges() >= to.getInEdges() ?
-  //   static_cast<int>(this->getInEdges()) - static_cast<int>(to.getInEdges()) :
-  //   static_cast<int>(to.getInEdges()) - static_cast<int>(this->getInEdges());
+  	// Neighborhood cost IN
+  cost += this->getInEdges() >= to.getInEdges() ?
+    static_cast<int>(this->getInEdges()) - static_cast<int>(to.getInEdges()) :
+    static_cast<int>(to.getInEdges()) - static_cast<int>(this->getInEdges());
 
-	// Neighborhood cost OUT
+  	// Neighborhood cost OUT
   cost += this->getOutEdges() >= to.getOutEdges() ?
     static_cast<int>(this->getOutEdges()) - static_cast<int>(to.getOutEdges()) :
     static_cast<int>(to.getOutEdges()) - static_cast<int>(this->getOutEdges());
 
+  // return to.getLabel().getX() + to.getLabel().getY() + to.getLabel().getZ()
+  //   + this->getLabel().getX() + this->getLabel().getY() + this->getLabel().getZ();
   return cost;
 }
 
@@ -76,7 +78,7 @@ unsigned int BinSlay::FctNode::assign_insertion_cost() const
   // The cost for an insertion is equal to the relabeling
   // cost + the Neighborhood cost which is equal to the Neighborhood_cost_IN
   // + the the Neighborhood_cost_OUT
-  return this->getLabel().sum() /*+ this->getInEdges()*/ + this->getOutEdges();
+  return this->getLabel().sum() + this->getInEdges() + this->getOutEdges();
 }
 
 unsigned int BinSlay::FctNode::assign_deletion_cost() const
@@ -84,5 +86,5 @@ unsigned int BinSlay::FctNode::assign_deletion_cost() const
   // The cost for a deletion is equal to the relabeling
   // cost + the Neighborhood cost which is equal and Neighborhood_cost_OUT
   // + the Neighborhood_cost_IN
-  return this->getLabel().sum() + this->getOutEdges() /*+ this->getInEdges()*/;
+  return this->getLabel().sum() + this->getOutEdges() + this->getInEdges();
 }

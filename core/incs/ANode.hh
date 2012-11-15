@@ -23,7 +23,7 @@ namespace BinSlay
   {
   public:
     ANode();
-    ANode(unsigned int idx,				// index in the matrix representing the graph
+    ANode(unsigned int idx,    			// index in the matrix representing the graph
 	 unsigned long addr,			// addr: identifier in the lib used for parsing
 	 int = 0, int = 0, int = 0,		// label three-tuple
 	 BinSlay::ReverseAPI::Crc32 crc32 = 0,	// crc32 based on opcodes

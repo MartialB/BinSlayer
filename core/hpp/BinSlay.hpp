@@ -5,20 +5,14 @@
  * \date 30/06/2012
  */
 
-#ifndef BINSLAY_HH_
-# define BINSLAY_HH_
+#ifndef __BINSLAY_HH__
+# define __BINSLAY_HH__
 
 # include <deque>
 # include <iostream>
 # include <list>
 # include <string>
 # include <vector>
-
-#define NODES_LIST(NodeType)	BinSlay::bind_node<NodeType>::NODES_LIST
-#define ISOMORPHES_LIST(NodeType)	BinSlay::bind_node<NodeType>::ISOMORPHES_LIST
-#define MAPPING(NodeType)		BinSlay::bind_node<NodeType>::MAPPING
-#define SELECTORS(NodeType)		BinSlay::bind_node<NodeType>::SELECTORS
-#define PROPERTIES(NodeType)       	BinSlay::bind_node<NodeType>::PROPERTIES
 
 namespace BinSlay
 {
@@ -47,12 +41,10 @@ template<typename NodeType>
 std::ostream& operator<<(std::ostream &os,
 			 typename BinSlay::bind_node<NodeType>::NODES_LIST const &nodes)
 {
-  for (typename BinSlay::bind_node<NodeType>::NODES_LIST::const_iterator it = nodes.begin();
-       it != nodes.end(); ++it)
-    {
-      os << **it << ", ";
-    }
+  for (auto it = nodes.begin(); it != nodes.end(); ++it) {
+    os << **it << ", ";
+  }
   return os;
 }
 
-#endif // !BINSLAY_HH
+#endif // !__BINSLAY_HH__

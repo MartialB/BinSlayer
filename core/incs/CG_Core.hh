@@ -27,20 +27,31 @@ namespace BinSlay
   public:
     virtual ~CG_Core();
     virtual bool load_graphs();
-    virtual bool load_graph_left();
-    virtual bool load_graph_right();
+    virtual double run_bindiff_on_two_nodes(
+	BinSlay::ReverseAPI::Address,
+	BinSlay::ReverseAPI::Address
+    );
     virtual bool add_Selector(BinSlay::idSelectors::idSelectors_e idSelector);
     virtual bool run_bindiff_algorithm(BinSlay::DiffingLevel level);
     virtual bool compute_ged(BinSlay::gedProperties::gedProperties_e options);
 
-    double run_bindiff_at_cfg_level(unsigned long addr_left, unsigned long addr_right);
+  public:
+    double run_bindiff_on_two_functions(
+	unsigned long addr_left,
+	unsigned long addr_right
+    );
+    bool diff();
 
   private:
-    void _run_bindiff_at_cfg_level();
+    bool _run_bindiff_at_cfg_level();
+    bool _load_graph_left();
+    bool _load_graph_right();
 
   private:
     CallGraph	*_left;
     CallGraph	*_right;
+    typename BinSlay::bind_node<BinSlay::BbNode>::SELECTORS	_cfg_selectors;
+    typename BinSlay::bind_node<BinSlay::BbNode>::PROPERTIES	_cfg_properties;
   };
 }
 
