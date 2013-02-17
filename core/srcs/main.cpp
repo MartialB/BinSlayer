@@ -1,13 +1,5 @@
-/**
- * \file main.cpp
- * \author Martial Bourquin
- * \version 1.0
- * \date 30/06/2012
- */
-
 #include <iostream>
 #include <string>
-
 #include "InternalsCore.hh"
 
 static inline int usage(void)
@@ -23,22 +15,20 @@ int main(int argc, char *argv[])
 
   // Create a instance of the InternalsCore object
   BinSlay::InternalsCore core;
-
   // Load internal libraries (BinaryHelper)
   if (!core.init()) {
     std::cerr << core.msg() << std::endl;
-    return 1;
+    return core.status();
   }
-
   // Create a instance of the CG_Core object
   BinSlay::CG_Core *cg_core = core.createCG_Core(argv[1], argv[2]);
   if (core.status() != BinSlay::InternalsCore::Status::OK) {
     std::cerr << core.msg() << std::endl;
-    return 1;
+    return core.status();
   }
 
-  ////////////////////////////////////////////////////////////
-  // BinDiff Algorithm
+  
+  //  BinDiff Algorithm
 
   // 1- Configuration of the Buindiff algorithm
   cg_core->add_Property(BinSlay::idProperties::UP);
@@ -59,8 +49,8 @@ int main(int argc, char *argv[])
 
   ////////////////////////////////////////////////////////////
   // Ged Computation
-  cg_core->compute_ged(BinSlay::gedProperties::WITH_VALIDATOR);
-  //cg_core->compute_ged(BinSlay::gedProperties::NO_OPTIONS);
+  //cg_core->compute_ged(BinSlay::gedProperties::WITH_VALIDATOR);
+  cg_core->compute_ged(BinSlay::gedProperties::NO_OPTIONS);
   std::cout << "Ged: " << cg_core->get_ged() << std::endl;
 
   {
@@ -76,22 +66,22 @@ int main(int argc, char *argv[])
     for (auto it_iso = final_ep->begin(); it_iso != final_ep->end(); ++it_iso) {
       // if both are not null
       if ((*it_iso)->getLeft() && (*it_iso)->getRight())
-	++nb_substitutions;
+  	++nb_substitutions;
       else if (!(*it_iso)->getLeft() && (*it_iso)->getRight())
-	++nb_insertions;
+  	++nb_insertions;
       if ((*it_iso)->getLeft() && !(*it_iso)->getRight())
-	++nb_deletions;
+  	++nb_deletions;
       cost += (*it_iso)->getLevel();
       if ((*it_iso)->getLeft() && (*it_iso)->getRight()) {
-	if ((*it_iso)->getLeft()->getName() == (*it_iso)->getRight()->getName()) {
-	  ++matched;
-	  if ((*it_iso)->getLevel()) {
-	    // std::cout << (*it_iso)->getLeft()->getName()  << " - "
-	    // 	    << (*it_iso)->getRight()->getName()
-	    // 	    << " - COST = " << std::dec << (*it_iso)->getLevel()
-	    // 	    << std::endl;
-	  }
-	}	
+  	if ((*it_iso)->getLeft()->getName() == (*it_iso)->getRight()->getName()) {
+  	  ++matched;
+  	  if ((*it_iso)->getLevel()) {
+  	    // std::cout << (*it_iso)->getLeft()->getName()  << " - "
+  	    // 	    << (*it_iso)->getRight()->getName()
+  	    // 	    << " - COST = " << std::dec << (*it_iso)->getLevel()
+  	    // 	    << std::endl;
+  	  }
+  	}	
       }
     }
     std::cout << "Number of elem in get iso list: " << std::dec << final_ep->size() << std::endl;
@@ -99,13 +89,13 @@ int main(int argc, char *argv[])
     std::cout << "Cost: " << std::dec << cost << std::endl;
 
     std::cout << std::dec << "swap: " << nb_substitutions
-	      << " - add: " << nb_insertions
-	      << " - del:" << nb_deletions
-	      << std::endl;
+  	      << " - add: " << nb_insertions
+  	      << " - del:" << nb_deletions
+  	      << std::endl;
 
     std::cout << "Incorrect matches: " << std::dec
-	      << (final_ep->size() - matched - nb_insertions - nb_deletions)
-	      << std::endl;
+  	      << (final_ep->size() - matched - nb_insertions - nb_deletions)
+  	      << std::endl;
   }
   {
     unsigned int matched = 0;

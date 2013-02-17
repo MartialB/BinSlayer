@@ -100,23 +100,25 @@ bool BinSlay::ReverseAPI::DyninstBin::init()
   if (!this->_sts) {
     return false;
   }
-  this->_co = new Dyninst::ParseAPI::CodeObject(this->_sts/*, NULL, NULL, true*/);
+  std::cerr << "this->_sts: 0x" << std::hex << this->_sts << std::endl;
+  this->_co = new Dyninst::ParseAPI::CodeObject(this->_sts/*, nullptr, nullptr, false*/);
   if (!this->_co) {
     return false;
   }
+  std::cerr << "this->_co: 0x" << std::hex << this->_co << std::endl;
   // Parse the binary
   this->_co->parse();
   this->_co->finalize();
 
 #ifdef BINSLAYER_DEBUG
   std::cerr << "# Number of functions found: " << std::dec << this->_co->funcs().size() << std::endl;
-  for (auto it_fct = this->_co->funcs().begin(); it_fct != this->_co->funcs().end(); ++it_fct)
-    {
-      std::cout << "Name: " << (*it_fct)->name()
-		<< " - nb basic blocks: " << std::dec << (*it_fct)->blocks().size()
-		<< std::endl;
-    }
+  for (auto it_fct = this->_co->funcs().begin(); it_fct != this->_co->funcs().end(); ++it_fct) {
+    std::cerr << "*it_fct: 0x" << std::hex << *it_fct << " - Name: " << (*it_fct)->name()
+      			<< " - nb basic blocks: " << std::dec << (*it_fct)->blocks().size()
+    		<< std::endl;
+  }
 #endif
+
   if (!this->_co->funcs().size()) {
     // DyninstAPI failed to recover functions
     return false;
@@ -230,39 +232,37 @@ BinSlay::ReverseAPI::DyninstBin::recover_call_graph() const
 
   bool err = Symtab::openFile(obj, this->_file_name);
   if (!err) {
+    std::cerr << "Error!" << std::endl
+		<< "  File: " << __FILE__ << std::endl
+		<< "  Function: " << __FUNCTION__ << std::endl
+		<< "  Line: " << __LINE__ << std::endl;
     abort();
   }
 
   //  Region *reg_got = nullptr;
   Region *reg_plt = nullptr;
-
-  // err = obj->findRegion(reg_got, ".got");
-  // if (!err) {
-  //   abort();
-  // }
-
   err = obj->findRegion(reg_plt, ".plt");
   if (!err) {
+    std::cerr << "Error!" << std::endl
+		<< "  File: " << __FILE__ << std::endl
+		<< "  Function: " << __FUNCTION__ << std::endl
+		<< "  Line: " << __LINE__ << std::endl;
     abort();
   }
 
   // Create a Call-Graph data structure, used to communicate between the DynInst dll
   // and the BinSlayer core engine.
   BinSlay::ReverseAPI::CG *cg = new BinSlay::ReverseAPI::CG;
-
   // Record already visited blocks
   std::map<Dyninst::Address, bool> seen;
-
   // Save the CG in .dot file format
   std::fstream fs((this->_file_name + ".dot").c_str(),
 		  std::fstream::in | std::fstream::out | std::fstream::trunc);
   fs << "digraph " << this->_file_name << " {" << std::endl;
-
   // Resize the Call-Graph data structure to the number of functions found
   cg->resize(this->_co->funcs().size());
-
-  // std::cerr << std::hex << "plt: 0x" << reg_plt->getRegionAddr() << " - got: 0x"
-  // 	    << reg_got->getRegionAddr() << std::endl;
+  std::cerr << "# Number of functions found in the CG: " << std::dec << this->_co->funcs().size()
+	    << std::endl;
 
   // For each function found...
   size_t nb_nodes = 0;
@@ -270,9 +270,7 @@ BinSlay::ReverseAPI::DyninstBin::recover_call_graph() const
   for (auto it_fct = this->_co->funcs().begin(); it_fct != this->_co->funcs().end(); ++it_fct) {
     Dyninst::ParseAPI::Function *f = *it_fct;
 
-    //    std::cerr << std::hex << "f addr: 0x" << f->entry()->start() << std::endl; 
-    if (/*reg_got->isOffsetInRegion(f->entry()->start()) ||
-	 */reg_plt->isOffsetInRegion(f->entry()->start())) {
+    if (reg_plt->isOffsetInRegion(f->entry()->start())) {
       // We skip dynamic calls
       ++dynamic_calls;
     } else {
@@ -735,11 +733,27 @@ extern "C"
 {
   EXPORT BinSlay::ReverseAPI::IBinary *get_instance_of_binary(std::string const &file)
   {
-    auto *bin = new  BinSlay::ReverseAPI::DyninstBin(file);
+    std::cerr << "Loading binary " << file << "." << std::endl
+		<< "  File: " << __FILE__ << std::endl
+		<< "  Function: " << __FUNCTION__ << std::endl
+		<< "  Line: " << __LINE__ << std::endl;
 
+    auto *bin = new (std::nothrow) BinSlay::ReverseAPI::DyninstBin(file);
+
+    if (!bin) {
+      std::cerr << "Failed to create an instance of IBinary with DyninstAPI."
+		<< "  File: " << __FILE__ << std::endl
+		<< "  Function: " << __FUNCTION__ << std::endl
+		<< "  Line: " << __LINE__ << std::endl;
+      return nullptr;
+    }
     // If we failed to properly load the binary, we delete the bin object and
     // we return the nullptr.
     if (!bin->init()) {
+      std::cerr << "Failed to create an instance of IBinary with DyninstAPI."
+		<< "  File: " << __FILE__ << std::endl
+		<< "  Function: " << __FUNCTION__ << std::endl
+		<< "  Line: " << __LINE__ << std::endl;
       delete bin;
       return nullptr;
     }

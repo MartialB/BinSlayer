@@ -125,12 +125,13 @@ namespace BinSlay
 	unsigned int col = 0;      
 	for (auto itB = setB.begin(); itB != setB.end(); ++itB) {
 	  if (*itA && *itB) {
-	    //double coeff = core.run_bindiff_on_two_nodes((*itA)->getAddr(), (*itB)->getAddr()) / 100;
+	    //	    double coeff = core.run_bindiff_on_two_nodes((*itA)->getAddr(), (*itB)->getAddr()) / 100;
 	    // std::cerr << " - (";
 	    // std::cerr << std::dec << coeff << ",";
 	    // upper left: substitution
 	    this->_matrix[row * _cost_matrix_size + col]._cost =
-	      ((*itA)->assign_substitution_cost(**itB));// * (coeff ? 1 - coeff : 1);
+	      ((*itA)->assign_substitution_cost(**itB));//(1-coeff)
+	      //+ ((*itA)->assign_substitution_cost(**itB));
 	    // std::cerr << std::dec
 	    // 	      << this->_matrix[row * _cost_matrix_size + col]._cost << ")";
 	  } else if (*itA && !*itB) {
@@ -305,14 +306,14 @@ namespace BinSlay
 	    }
 	    this->_ged += this->_matrix[row * _cost_matrix_size + col]._saved_cost;
 	  }
-// #ifdef BINSLAYER_DEBUG
-//       std::cerr << std::dec << "swap: " << nb_substitutions
-// 		<< " - add: " << nb_insertions
-// 		<< " - del:" << nb_deletions
-// 		<< std::endl;
-// #endif // !BINSLAYER_DEBUG
+      //#ifdef BINSLAYER_DEBUG
+      std::cerr << std::dec << "swap: " << nb_substitutions
+		<< " - add: " << nb_insertions
+		<< " - del:" << nb_deletions
+		<< std::endl;
+      //#endif // !BINSLAYER_DEBUG
       this->_edit_path = ret;
-      //      std::cout << "GED: " << std::dec << this->_ged << std::endl;
+      std::cout << "GED: " << std::dec << this->_ged << std::endl;
       return this->_ged;
     }
     

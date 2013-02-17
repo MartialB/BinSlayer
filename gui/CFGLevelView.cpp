@@ -687,11 +687,11 @@ void BinSlay::Gui::CFGLevelView::_display_bindiff_results()
     }
 
   // Display the percentage of similarty between the two compared graphs
-  int max = _core.getNbNodeInGraphLeft() < _core.getNbNodeInGraphRight() ?
-    _core.getNbNodeInGraphLeft() : _core.getNbNodeInGraphRight();
+  int max = _core.get_nb_node_gleft() < _core.get_nb_node_gright() ?
+    _core.get_nb_node_gleft() : _core.get_nb_node_gright();
 
-  convertor << "Left: " << std::dec << nb_isomorphims << "/" << _core.getNbNodeInGraphLeft()
-	    << " - Right: " << std::dec << nb_isomorphims << "/" << _core.getNbNodeInGraphRight()
+  convertor << "Left: " << std::dec << nb_isomorphims << "/" << _core.get_nb_node_gleft()
+	    << " - Right: " << std::dec << nb_isomorphims << "/" << _core.get_nb_node_gright()
 	    << " => Percentage: " << (nb_isomorphims / max * 100.0) << "%";
   
   bindiffLineEdit->setText(convertor.str().c_str());  
@@ -700,7 +700,7 @@ void BinSlay::Gui::CFGLevelView::_display_bindiff_results()
 void BinSlay::Gui::CFGLevelView::run_bindiff()
 {
   // Run algorithm
-  if (!_core.run_bindiff_algorithm())
+  if (!_core.run_bindiff_algorithm(BinSlay::DiffingLevel::FUNCTION))
     return;
   // Display results
   _display_bindiff_results();  

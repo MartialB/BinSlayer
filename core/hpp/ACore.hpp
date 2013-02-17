@@ -396,13 +396,13 @@ namespace BinSlay
   template<typename NodeType> typename BinSlay::bind_node<NodeType>::NODES_LIST const &
   BinSlay::ACore<NodeType>::get_list_left() const
   {
-    return *this->_l_left;
+    return this->_l_left;
   }
 
   template<typename NodeType> typename BinSlay::bind_node<NodeType>::NODES_LIST const &
   BinSlay::ACore<NodeType>::get_list_right() const
   {
-    return *this->_l_right;
+    return this->_l_right;
   }
 
   template<typename NodeType> void

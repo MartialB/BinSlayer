@@ -58,7 +58,7 @@ BinSlay::InternalsCore::createCG_Core(
   // Load binary 1
   ReverseAPI::IBinary *left = _loadBinary(bin1);
   IF_NULLPTR_RETURN_NULL(left, BinSlay::Core_ErrorHandler::Status::BINARY_LOADING_FAIL,
-		       "Critical: Failed to load binary '%s'.", bin1.c_str());
+			 "Critical: Failed to load binary '%s'.", bin1.c_str());
   // Load binary 2
   ReverseAPI::IBinary *right = _loadBinary(bin2);
   if (!right) {

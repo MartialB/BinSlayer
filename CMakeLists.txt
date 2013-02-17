@@ -40,29 +40,32 @@ IF(WIN32)
 		SET(CMAKE_CXX_FLAGS "/W4 ${CMAKE_CXX_FLAGS}")
 	ENDIF()
 	SET(DYNINST_LIBS ./libs/windows/i386-unknown-nt4.0/lib/)	# dyninst libraries
+	SET(DYNINST_INCS ./libs/windows/i386-unknown-nt4.0/inc/)	# dyninst libraries
+	# SET(BEAENGINE_LIBS ./libs/beaengine/)
+	# SET(BEAENGINE_LIBS ./libs/beaengine/)
 ELSE()
 	SET(CMAKE_CXX_FLAGS "-W -Wall -O2 -Wextra -std=c++0x ${CMAKE_CXX_FLAGS}")
 	IF(DEBUG)
 		SET(CMAKE_CXX_FLAGS " -g3 -DBINSLAYER_DEBUG ${CMAKE_CXX_FLAGS}")
 	ENDIF()
 	SET(DYNINST_LIBS ./libs/linux/i386-unknown-linux2.4/lib/)	# dyninst libraries
+	SET(DYNINST_INCS ./libs/linux/i386-unknown-linux2.4/inc/)	# dyninst includes
+	SET(BEAENGINE_LIBS ./libs/linux/beaengine/)
+	SET(BEAENGINE_INCS ./libs/linux)
 ENDIF()
 
 IF(MEASURE_PERFORMANCE)
   SET(CMAKE_CXX_FLAGS "-DMEASURE_PERFORMANCE ${CMAKE_CXX_FLAGS}")
 ENDIF()
 
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/output)
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/output)
 SET(DLL_PATH ./dlls/)					# dlls dir
 SET(CORE_PATH ./core/)					# core dir
 SET(CORE_INCS_DIR ${CORE_PATH}/incs/)			# directory where core header files are
 SET(CORE_HPP_DIR ${CORE_PATH}/hpp/)			# directory where core header templated files are
 SET(CORE_SRCS_DIR ${CORE_PATH}/srcs/)			# directory where core source files are
 SET(DLL_INCS_DIR ${DLL_PATH}/DllManager/)		# directory where dll header files are
-SET(DYNINST_INCS ./libs/include/)			# dyninst includes
-SET(BEAENGINE_INCS ./libs/)
-SET(BEAENGINE_LIBS ./libs/beaengine/)
 
 SET(headers
 	${DYNINST_INCS}
@@ -70,7 +73,7 @@ SET(headers
 	${CORE_HPP_DIR}
 	${DLL_INCS_DIR}
 	${BEAENGINE_INCS}
-	/home/egwene/Downloads/boost_1_50_0
+	./libs/boost
 )
 
 INCLUDE_DIRECTORIES(${headers})

@@ -58,7 +58,7 @@ unsigned int BinSlay::FctNode::assign_substitution_cost(BinSlay::ANode const &o)
   	// relabeling cost
   cost += this->getLabel().get_relabeling_cost(to.getLabel());
 
-  	// Neighborhood cost IN
+   	// Neighborhood cost IN
   cost += this->getInEdges() >= to.getInEdges() ?
     static_cast<int>(this->getInEdges()) - static_cast<int>(to.getInEdges()) :
     static_cast<int>(to.getInEdges()) - static_cast<int>(this->getInEdges());

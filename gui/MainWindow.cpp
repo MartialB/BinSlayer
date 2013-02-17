@@ -2,15 +2,15 @@
 
 BinSlay::Gui::MainWindow::MainWindow(BinSlay::InternalsCore &core)
   : _core(core),
-    _open_view(NULL),
-    _call_graph_view(NULL)
+    _open_view(nullptr),
+    _call_graph_view(nullptr)
 {
   // Create the menu
   createMenus();
 
   // Create the '_call_graph_view' and the '_open_view' and set the
   // '_call_graph_view' as the central widget of the main window
-  _call_graph_view = new BinSlay::Gui::CallGraphLevelView(core, NULL);
+  _call_graph_view = new BinSlay::Gui::CallGraphLevelView(core, nullptr);
   _open_view = new BinSlay::Gui::OpenBinaryView(core, *_call_graph_view);
   setCentralWidget(_call_graph_view);
 

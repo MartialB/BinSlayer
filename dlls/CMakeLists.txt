@@ -31,7 +31,6 @@ ADD_LIBRARY(
 IF(WIN32)
   TARGET_LINK_LIBRARIES(
     ${DLL_NAME}
-    libdyninstAPI
     libparseAPI
     libcommon
     libsymtabAPI
@@ -41,7 +40,6 @@ IF(WIN32)
 ELSE()
   TARGET_LINK_LIBRARIES(
     ${DLL_NAME}
-    dyninstAPI
     parseAPI
     common
     symtabAPI
