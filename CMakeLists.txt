@@ -7,7 +7,12 @@ SET(BinSlay_VERSION_MAJOR 1)
 SET(BinSlay_VERSION_MINOR 0)
 
 IF(WITH_GUI)
-  FIND_PACKAGE(Qt4 REQUIRED)
+  SET(CMAKE_AUTOMOC ON)
+  SET(CMAKE_INCLUDE_CURRENT_DIR ON)
+  FIND_PACKAGE(Qt5Widgets REQUIRED)
+  INCLUDE_DIRECTORIES(${Qt5Widgets_INCLUDE_DIRS})
+  ADD_DEFINITIONS(${Qt5Widgets_DEFINITIONS})
+  SET(CMAKE_CXX_FLAGS "${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
   SET(GUI_PATH ./gui/)
   SET(
 	qt_gui_headers
@@ -30,9 +35,6 @@ IF(WITH_GUI)
 	${GUI_PATH}/MainWindow.cpp
 	${GUI_PATH}/main.cpp
   )
-  QT4_WRAP_CPP(qt_gui_headers_moc ${qt_gui_headers})
-  INCLUDE(${QT_USE_FILE})
-  ADD_DEFINITIONS(${QT_DEFINITIONS})
 ENDIF()
 
 IF(WIN32)
@@ -48,8 +50,6 @@ ELSE()
 	IF(DEBUG)
 		SET(CMAKE_CXX_FLAGS " -g3 -DBINSLAYER_DEBUG ${CMAKE_CXX_FLAGS}")
 	ENDIF()
-	SET(DYNINST_LIBS ./libs/linux/i386-unknown-linux2.4/lib/)	# dyninst libraries
-	SET(DYNINST_INCS ./libs/linux/i386-unknown-linux2.4/inc/)	# dyninst includes
 	SET(BEAENGINE_LIBS ./libs/linux/beaengine/)
 	SET(BEAENGINE_INCS ./libs/linux)
 ENDIF()
@@ -58,26 +58,24 @@ IF(MEASURE_PERFORMANCE)
   SET(CMAKE_CXX_FLAGS "-DMEASURE_PERFORMANCE ${CMAKE_CXX_FLAGS}")
 ENDIF()
 
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/output)
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/output)
-SET(DLL_PATH ./dlls/)					# dlls dir
-SET(CORE_PATH ./core/)					# core dir
-SET(CORE_INCS_DIR ${CORE_PATH}/incs/)			# directory where core header files are
-SET(CORE_HPP_DIR ${CORE_PATH}/hpp/)			# directory where core header templated files are
-SET(CORE_SRCS_DIR ${CORE_PATH}/srcs/)			# directory where core source files are
-SET(DLL_INCS_DIR ${DLL_PATH}/DllManager/)		# directory where dll header files are
+SET(DLL_PATH ./dlls/)
+SET(CORE_PATH ./core/)
+SET(CORE_INCS_DIR ${CORE_PATH}/incs/)
+SET(CORE_HPP_DIR ${CORE_PATH}/hpp/)
+SET(CORE_SRCS_DIR ${CORE_PATH}/srcs/)
+SET(DLL_INCS_DIR ${DLL_PATH}/DllManager/)
 
 SET(headers
-	${DYNINST_INCS}
 	${CORE_INCS_DIR}
 	${CORE_HPP_DIR}
 	${DLL_INCS_DIR}
 	${BEAENGINE_INCS}
-	./libs/boost
 )
 
 INCLUDE_DIRECTORIES(${headers})
-LINK_DIRECTORIES(${DYNINST_LIBS} ${BEAENGINE_LIBS})
+LINK_DIRECTORIES(${BEAENGINE_LIBS})
 
 # CORE headers
 SET(CORE_INCS
@@ -180,7 +178,7 @@ IF(WIN32)
   # target_link_libraries(bindiff_on_steroids)
 ELSE()
   IF(WITH_GUI)
-    TARGET_LINK_LIBRARIES(BinSlayer dl ${QT_LIBRARIES})
+    TARGET_LINK_LIBRARIES(BinSlayer dl ${Qt5Widgets_LIBRARIES})
   ELSE()
     TARGET_LINK_LIBRARIES(BinSlayer dl rt)
   ENDIF()
@@ -206,6 +204,10 @@ ADD_CUSTOM_TARGET(doxygen-clean
     COMMAND rm -rf html latex
     COMMENT "Cleaning doxygen generated files...")
 
+ADD_CUSTOM_TARGET(install
+    COMMAND mv output/libBinaryHelper.so /usr/lib
+    COMMENT "Installing libBinaryHelper.so...")
+
 ADD_CUSTOM_TARGET(fclean
     COMMAND make clean
     COMMAND make doxygen-clean
@@ -213,6 +215,7 @@ ADD_CUSTOM_TARGET(fclean
     COMMAND make clean
     COMMAND make cmake-clean
     COMMAND rm -rf Makefile
+    COMMAND rm -rf moc_*.cpp
     COMMENT "Cleaning all generated files...")
 
 SUBDIRS(dlls)

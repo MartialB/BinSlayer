@@ -1,3 +1,4 @@
+#include <QApplication>
 #include "MainWindow.h"
 
 BinSlay::Gui::MainWindow::MainWindow(BinSlay::InternalsCore &core)

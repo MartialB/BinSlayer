@@ -1,7 +1,21 @@
 #ifndef OPEN_BINARY_VIEW_H
 # define OPEN_BINARY_VIEW_H
 
-# include <QtGui>
+# include <QDialog>
+# include <QGroupBox>
+# include <QTableWidget>
+# include <QLineEdit>
+# include <QPushButton>
+# include <QTextEdit>
+# include <QVBoxLayout>
+# include <QFormLayout>
+# include <QHeaderView>
+# include <QCheckBox>
+# include <QLabel>
+# include <QSpinBox>
+# include <QAction>
+# include <QFileDialog>
+
 # include "InternalsCore.hh"
 # include "CallGraphLevelView.h"
 

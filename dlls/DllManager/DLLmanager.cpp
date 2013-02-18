@@ -35,7 +35,7 @@ bool DllManager::OpenLibrary(std::string const &DllName)
   
   if (this->DllList.find(DllName) != this->DllList.end())
     return true;
-  rDllName += "./lib"; rDllName += DllName; rDllName += dll_extension;
+  rDllName += "lib"; rDllName += DllName; rDllName += dll_extension;
   IDll * dll = new Dll(rDllName);
   if (dll->open() == false)
     {

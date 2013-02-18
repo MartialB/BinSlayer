@@ -10,10 +10,10 @@ ELSE()
 ENDIF()
 
 INCLUDE_DIRECTORIES(${headers})
-LINK_DIRECTORIES(${DYNINST_LIBS} ${BEAENGINE_LIBS})
+LINK_DIRECTORIES(${BEAENGINE_LIBS})
 
 SET(
-	DYNINST_SRCS
+	BINARY_HELPER_SRCS
 	DyninstBin.hh
 	DyninstBin.cpp
 	CFG_Builder.hh
@@ -25,27 +25,20 @@ SET(
 ADD_LIBRARY(
 	${DLL_NAME}
 	SHARED
-	${DYNINST_SRCS}
+	${BINARY_HELPER_SRCS}
 )
 
 IF(WIN32)
   TARGET_LINK_LIBRARIES(
     ${DLL_NAME}
     libparseAPI
-    libcommon
-    libsymtabAPI
-    libinstructionAPI
     BeaEngine_s_d
 )
 ELSE()
   TARGET_LINK_LIBRARIES(
     ${DLL_NAME}
     parseAPI
-    common
-    symtabAPI
-    instructionAPI
-    dwarf
-    elf
+    BinaryHelper
     BeaEngine_s_d
 )  
 ENDIF()

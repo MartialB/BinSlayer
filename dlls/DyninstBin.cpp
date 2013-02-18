@@ -12,6 +12,18 @@
 #include "CFG_Builder.hh"
 #include "BB_Labelling.hh"
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef __linux__
+# define EXPORT
+#else
+# define EXPORT __declspec(dllexport)
+#endif
+
+extern "C"
+{
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 BinSlay::ReverseAPI::FctVertex::FctVertex(
@@ -721,16 +733,16 @@ BinSlay::ReverseAPI::DyninstBin::recover_function_instr(
   return instrs;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef __linux__
-# define EXPORT
-#else
-# define EXPORT __declspec(dllexport)
-#endif
+// #ifdef __linux__
+// # define EXPORT
+// #else
+// # define EXPORT __declspec(dllexport)
+// #endif
 
-extern "C"
-{
+// extern "C"
+// {
   EXPORT BinSlay::ReverseAPI::IBinary *get_instance_of_binary(std::string const &file)
   {
     std::cerr << "Loading binary " << file << "." << std::endl

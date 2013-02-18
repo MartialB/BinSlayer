@@ -1,7 +1,10 @@
 #ifndef MAINWINDOW_H
 # define MAINWINDOW_H
 
-# include <QtGui>
+# include <QMainWindow>
+# include <QAction>
+# include <QMenu>
+# include <QMenuBar>
 # include "InternalsCore.hh"
 # include "OpenBinaryView.h"
 # include "CallGraphLevelView.h"

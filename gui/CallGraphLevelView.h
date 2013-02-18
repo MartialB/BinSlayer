@@ -1,7 +1,20 @@
 #ifndef CALLGRAPHLEVELVIEW_H
 # define CALLGRAPHLEVELVIEW_H
 
-# include <QtGui>
+# include <QDialog>
+# include <QGroupBox>
+# include <QTableWidget>
+# include <QLineEdit>
+# include <QPushButton>
+# include <QTextEdit>
+# include <QVBoxLayout>
+# include <QFormLayout>
+# include <QHeaderView>
+# include <QCheckBox>
+# include <QLabel>
+# include <QSpinBox>
+# include <QAction>
+# include <QDialogButtonBox>
 # include "InternalsCore.hh"
 
 namespace BinSlay {

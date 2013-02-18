@@ -1,7 +1,15 @@
 #ifndef SHOW_BASIC_BLOCK_VIEW_H
 # define SHOW_BASIC_BLOCK_VIEW_H
 
-# include <QtGui>
+# include <QDialog>
+# include <QGroupBox>
+# include <QTableWidget>
+# include <QLineEdit>
+# include <QPushButton>
+# include <QTextEdit>
+# include <QVBoxLayout>
+# include <QFormLayout>
+# include <QHeaderView>
 # include "InternalsCore.hh"
 
 namespace BinSlay {

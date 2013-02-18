@@ -90,7 +90,6 @@ void BinSlay::Gui::CFGLevelView::createIsoListView()
   isoListView = new QTableWidget(0, 3);
 
   isoListView->setHorizontalHeaderLabels(labels);
-  isoListView->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
   isoListView->horizontalHeader()->setCascadingSectionResizes(true);
   isoListView->horizontalHeader()->setStretchLastSection(true);
   isoListView->verticalHeader()->hide();
@@ -117,7 +116,6 @@ void BinSlay::Gui::CFGLevelView::createEditPathView()
   editPathView = new QTableWidget(0, 4);
 
   editPathView->setHorizontalHeaderLabels(labels);
-  editPathView->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
   editPathView->horizontalHeader()->setCascadingSectionResizes(true);
   editPathView->horizontalHeader()->setStretchLastSection(true);
   editPathView->verticalHeader()->hide();
@@ -143,7 +141,6 @@ void BinSlay::Gui::CFGLevelView::createMatchedBasicBlocksView()
   matchedBasicBlocksView = new QTableWidget(0, 1);
 
   matchedBasicBlocksView->setHorizontalHeaderLabels(labels);
-  matchedBasicBlocksView->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
   matchedBasicBlocksView->horizontalHeader()->setCascadingSectionResizes(true);
   matchedBasicBlocksView->horizontalHeader()->setStretchLastSection(true);
   matchedBasicBlocksView->verticalHeader()->hide();
@@ -163,7 +160,6 @@ void BinSlay::Gui::CFGLevelView::createUnMatchedBasicBlocksView()
   unmatchedBasicBlocksView = new QTableWidget(0, 1);
 
   unmatchedBasicBlocksView->setHorizontalHeaderLabels(labels);
-  unmatchedBasicBlocksView->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
   unmatchedBasicBlocksView->horizontalHeader()->setCascadingSectionResizes(true);
   unmatchedBasicBlocksView->horizontalHeader()->setStretchLastSection(true);
   unmatchedBasicBlocksView->verticalHeader()->hide();

@@ -1,7 +1,20 @@
 #ifndef CFGLEVELVIEW_H
 # define CFGLEVELVIEW_H
 
-# include <QtGui>
+# include <QDialog>
+# include <QGroupBox>
+# include <QTableWidget>
+# include <QLineEdit>
+# include <QPushButton>
+# include <QTextEdit>
+# include <QVBoxLayout>
+# include <QFormLayout>
+# include <QHeaderView>
+# include <QCheckBox>
+# include <QLabel>
+# include <QSpinBox>
+# include <QAction>
+
 # include "InternalsCore.hh"
 # include "BinDiff.hh"
 

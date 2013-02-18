@@ -92,7 +92,6 @@ void BinSlay::Gui::ShowFunctionView::createDisassemblyView()
   disassemblyView = new QTableWidget(0, 3);
 
   disassemblyView->setHorizontalHeaderLabels(labels);
-  disassemblyView->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
   disassemblyView->horizontalHeader()->setCascadingSectionResizes(true);
   disassemblyView->horizontalHeader()->setStretchLastSection(true);
   disassemblyView->verticalHeader()->hide();

@@ -104,7 +104,6 @@ void BinSlay::Gui::CallGraphLevelView::createIsoListView()
   isoListView = new QTableWidget(0, 5);
 
   isoListView->setHorizontalHeaderLabels(labels);
-  isoListView->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
   isoListView->horizontalHeader()->setCascadingSectionResizes(true);
   isoListView->horizontalHeader()->setStretchLastSection(true);
   isoListView->verticalHeader()->hide();
@@ -128,7 +127,6 @@ void BinSlay::Gui::CallGraphLevelView::createEditPathView()
   editPathView = new QTableWidget(0, 4);
 
   editPathView->setHorizontalHeaderLabels(labels);
-  editPathView->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
   editPathView->horizontalHeader()->setCascadingSectionResizes(true);
   editPathView->horizontalHeader()->setStretchLastSection(true);
   editPathView->verticalHeader()->hide();
@@ -154,7 +152,6 @@ void BinSlay::Gui::CallGraphLevelView::createMatchedFunctionsView()
   matchedFunctionsView = new QTableWidget(0, 2);
 
   matchedFunctionsView->setHorizontalHeaderLabels(labels);
-  matchedFunctionsView->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
   matchedFunctionsView->horizontalHeader()->setCascadingSectionResizes(true);
   matchedFunctionsView->horizontalHeader()->setStretchLastSection(true);
   matchedFunctionsView->verticalHeader()->hide();
@@ -174,7 +171,6 @@ void BinSlay::Gui::CallGraphLevelView::createUnMatchedFunctionsView()
   unmatchedFunctionsView = new QTableWidget(0, 2);
 
   unmatchedFunctionsView->setHorizontalHeaderLabels(labels);
-  unmatchedFunctionsView->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
   unmatchedFunctionsView->horizontalHeader()->setCascadingSectionResizes(true);
   unmatchedFunctionsView->horizontalHeader()->setStretchLastSection(true);
   unmatchedFunctionsView->verticalHeader()->hide();

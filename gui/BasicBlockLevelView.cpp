@@ -35,7 +35,6 @@ void BinSlay::Gui::BasicBlockLevelView::createDisassemblyGroupBox()
 
   disassemblyLeftView = new QTableWidget(0, 3);
   disassemblyLeftView->setHorizontalHeaderLabels(labels);
-  disassemblyLeftView->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
   disassemblyLeftView->horizontalHeader()->setCascadingSectionResizes(true);
   disassemblyLeftView->horizontalHeader()->setStretchLastSection(true);
   disassemblyLeftView->verticalHeader()->hide();
@@ -43,7 +42,6 @@ void BinSlay::Gui::BasicBlockLevelView::createDisassemblyGroupBox()
 
   disassemblyRightView = new QTableWidget(0, 3);
   disassemblyRightView->setHorizontalHeaderLabels(labels);
-  disassemblyRightView->horizontalHeader()->setResizeMode(QHeaderView::Interactive);
   disassemblyRightView->horizontalHeader()->setCascadingSectionResizes(true);
   disassemblyRightView->horizontalHeader()->setStretchLastSection(true);
   disassemblyRightView->verticalHeader()->hide();
